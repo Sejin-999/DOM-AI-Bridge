@@ -27,6 +27,7 @@
   const DRAG_THRESHOLD_PX = 6;
   const HIGHLIGHT_COLOR_STORAGE_KEY = 'agt_highlight_colors';
   const MARKER_VISIBILITY_STORAGE_KEY = 'agt_marker_visibility';
+  const I18N_LOCALE_STORAGE_KEY = 'agt_locale';
 
   // ──────────────────────────────────────────
   // 스냅샷 (깊은 복사)
@@ -441,11 +442,32 @@
     return window.__AGT.getMarkersVisible();
   }
 
+  async function syncI18nState() {
+    if (!window.__AGT_I18N || typeof window.__AGT_I18N.init !== 'function') return null;
+    await window.__AGT_I18N.init();
+    const state = typeof window.__AGT_I18N.refresh === 'function'
+      ? await window.__AGT_I18N.refresh()
+      : window.__AGT_I18N.getState();
+
+    if (typeof window.__AGT.refreshOverlayI18n === 'function') {
+      window.__AGT.refreshOverlayI18n();
+    }
+    syncSelectionCounter();
+    return state;
+  }
+
   // ──────────────────────────────────────────
   // popup / background에서 오는 메시지 처리
   // ──────────────────────────────────────────
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    const { type, payload } = message;
+    const { type, payload } = message || {};
+
+    if (type === 'I18N_REFRESH') {
+      void syncI18nState().then((state) => {
+        sendResponse({ ok: true, locale: state && state.locale });
+      });
+      return true;
+    }
 
     switch (type) {
       case 'TOGGLE_ACTIVE': {
@@ -570,10 +592,17 @@
     subtree: true
   });
 
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return;
+    if (!Object.prototype.hasOwnProperty.call(changes, I18N_LOCALE_STORAGE_KEY)) return;
+    void syncI18nState();
+  });
+
   // ──────────────────────────────────────────
   // 초기화
   // ──────────────────────────────────────────
   document.addEventListener('keydown', onGlobalKeyDown, true);
+  void syncI18nState();
   loadHighlightColorsFromStorage();
   loadMarkerVisibilityFromStorage();
   loadFromStorage();
