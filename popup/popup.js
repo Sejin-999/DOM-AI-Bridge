@@ -18,23 +18,23 @@
   // ──────────────────────────────────────────
   // DOM 참조
   // ──────────────────────────────────────────
-  const toggleBtn    = document.getElementById('toggleBtn');
-  const toggleLabel  = document.getElementById('toggleLabel');
-  const tabCount     = document.getElementById('tabCount');
-  const selCount     = document.getElementById('selCount');
-  const undoBtn      = document.getElementById('undoBtn');
-  const redoBtn      = document.getElementById('redoBtn');
-  const clearAllBtn  = document.getElementById('clearAllBtn');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const toggleLabel = document.getElementById('toggleLabel');
+  const tabCount = document.getElementById('tabCount');
+  const selCount = document.getElementById('selCount');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
   const selectionList = document.getElementById('selectionList');
-  const emptyState   = document.getElementById('emptyState');
-  const searchInput  = document.getElementById('searchInput');
-  const searchBtn    = document.getElementById('searchBtn');
+  const emptyState = document.getElementById('emptyState');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
   const searchResult = document.getElementById('searchResult');
-  const statusUrl    = document.getElementById('statusUrl');
+  const statusUrl = document.getElementById('statusUrl');
   const markerToggleBtn = document.getElementById('markerToggleBtn');
-  const toast        = document.getElementById('toast');
-  const osWinBtn     = document.getElementById('osWinBtn');
-  const osMacBtn     = document.getElementById('osMacBtn');
+  const toast = document.getElementById('toast');
+  const osWinBtn = document.getElementById('osWinBtn');
+  const osMacBtn = document.getElementById('osMacBtn');
   const shortcutOsLabel = document.getElementById('shortcutOsLabel');
   const shortcutTableBody = document.getElementById('shortcutTableBody');
   const selectedColorInput = document.getElementById('selectedColorInput');
@@ -44,80 +44,92 @@
   const selectedColorPalette = document.getElementById('selectedColorPalette');
   const searchColorPalette = document.getElementById('searchColorPalette');
   const resetHighlightColorsBtn = document.getElementById('resetHighlightColorsBtn');
-  const clearAllDefaultText = clearAllBtn.textContent;
-  const clearAllDefaultTitle = clearAllBtn.title;
+  const languageSelect = document.getElementById('languageSelect');
+
+  let clearAllDefaultText = '';
+  let clearAllDefaultTitle = '';
   let clearAllConfirmArmed = false;
   let clearAllConfirmTimer = null;
   let shortcutPlatform = 'win';
+
   const HIGHLIGHT_COLOR_STORAGE_KEY = 'agt_highlight_colors';
   const MARKER_VISIBILITY_STORAGE_KEY = 'agt_marker_visibility';
+
   const DEFAULT_HIGHLIGHT_COLORS = {
     selected: '#16a34a',
     search: '#d97706'
   };
+
   const RECOMMENDED_HIGHLIGHT_COLORS = [
-    '#ef4444',
-    '#f97316',
-    '#f59e0b',
-    '#eab308',
-    '#22c55e',
-    '#14b8a6',
-    '#06b6d4',
-    '#3b82f6',
-    '#8b5cf6',
-    '#ec4899'
+    '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e',
+    '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'
   ];
 
   const SHORTCUT_ROWS = [
-    { label: '선택 모드 토글', win: 'Ctrl+Shift+X', mac: 'Cmd+Shift+X' },
-    { label: '실행 취소', win: 'Ctrl+Z', mac: 'Cmd+Z' },
-    { label: '다시 실행', win: 'Ctrl+Y', mac: 'Cmd+Shift+Z' },
-    { label: '팝오버 취소/종료', win: 'Esc', mac: 'Esc' },
-    { label: '주석 확정 (Add)', win: 'Enter', mac: 'Enter' },
-    { label: '팝오버 줄바꿈', win: 'Shift+Enter', mac: 'Shift+Enter' }
+    { labelKey: 'popup_shortcut_toggle', win: 'Ctrl+Shift+X', mac: 'Cmd+Shift+X' },
+    { labelKey: 'popup_shortcut_undo', win: 'Ctrl+Z', mac: 'Cmd+Z' },
+    { labelKey: 'popup_shortcut_redo', win: 'Ctrl+Y', mac: 'Cmd+Shift+Z' },
+    { labelKey: 'popup_shortcut_popover_cancel', win: 'Esc', mac: 'Esc' },
+    { labelKey: 'popup_shortcut_add', win: 'Enter', mac: 'Enter' },
+    { labelKey: 'popup_shortcut_newline', win: 'Shift+Enter', mac: 'Shift+Enter' }
   ];
+
+  function t(key, vars, fallback) {
+    return window.__AGT_I18N.t(key, vars, fallback);
+  }
 
   // ──────────────────────────────────────────
   // 탭 전환
   // ──────────────────────────────────────────
-  document.querySelectorAll('.tab').forEach(tab => {
+  document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach((node) => node.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach((panel) => panel.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
 
-      // 검색 탭을 벗어나면 하이라이트 제거
       if (tab.dataset.tab !== 'search') {
         sendToContent({ type: 'CLEAR_SEARCH' });
       }
     });
   });
 
-  initShortcutPreference();
-  renderRecommendedColorPalettes();
   osWinBtn.addEventListener('click', () => setShortcutPlatform('win', true));
   osMacBtn.addEventListener('click', () => setShortcutPlatform('mac', true));
+
   selectedColorInput.addEventListener('input', () => { void onHighlightColorChanged(false); });
   searchColorInput.addEventListener('input', () => { void onHighlightColorChanged(false); });
   selectedColorInput.addEventListener('change', () => { void onHighlightColorChanged(true); });
   searchColorInput.addEventListener('change', () => { void onHighlightColorChanged(true); });
+
   markerToggleBtn.addEventListener('click', async () => {
     await toggleMarkerVisibility();
   });
+
   resetHighlightColorsBtn.addEventListener('click', async () => {
     setHighlightColorInputs(DEFAULT_HIGHLIGHT_COLORS);
     await saveHighlightColorPreference(DEFAULT_HIGHLIGHT_COLORS, true);
   });
-  setHighlightColorInputs(DEFAULT_HIGHLIGHT_COLORS);
-  setMarkerToggleButton(true);
+
+  languageSelect.addEventListener('change', async () => {
+    const nextLocale = languageSelect.value || 'auto';
+    const state = await window.__AGT_I18N.setLocalePreference(nextLocale);
+    applyLocalizedStaticText();
+    populateLanguageOptions(state);
+    applyState(currentState);
+    showToast(t('popup_toast_language_updated', null, 'Language updated'));
+    await sendToContent({ type: 'I18N_REFRESH' });
+  });
 
   // ──────────────────────────────────────────
   // content script 메시지 전송
   // ──────────────────────────────────────────
   function sendToContent(message) {
     return new Promise((resolve) => {
-      if (!currentTabId) { resolve(null); return; }
+      if (!currentTabId) {
+        resolve(null);
+        return;
+      }
       chrome.tabs.sendMessage(currentTabId, message, (response) => {
         if (chrome.runtime.lastError) {
           resolve(null);
@@ -126,6 +138,65 @@
         }
       });
     });
+  }
+
+  async function initI18n() {
+    const state = await window.__AGT_I18N.init();
+    applyLocalizedStaticText();
+    populateLanguageOptions(state);
+  }
+
+  function applyLocalizedStaticText() {
+    window.__AGT_I18N.applyToDocument(document);
+
+    const state = window.__AGT_I18N.getState();
+    if (state && state.locale) {
+      document.documentElement.lang = state.locale;
+    }
+
+    clearAllDefaultText = t('popup_clear_all_button', null, '✕ Clear all');
+    clearAllDefaultTitle = t('popup_clear_all_title', null, 'Clear all');
+
+    if (clearAllConfirmArmed) {
+      clearAllBtn.textContent = t('popup_clear_all_confirm_button', null, '✕ Confirm clear?');
+      clearAllBtn.title = t('popup_clear_all_confirm_title', null, 'Press once more to clear all');
+    } else {
+      clearAllBtn.textContent = clearAllDefaultText;
+      clearAllBtn.title = clearAllDefaultTitle;
+    }
+
+    setShortcutPlatform(shortcutPlatform, false);
+    setMarkerToggleButton(markerToggleBtn.dataset.visible !== '0');
+    renderRecommendedColorPalettes();
+  }
+
+  function populateLanguageOptions(i18nState) {
+    const state = i18nState || window.__AGT_I18N.getState();
+    const localePreference = state.localePreference || 'auto';
+    const locales = Array.isArray(state.availableLocales) ? state.availableLocales : [];
+
+    languageSelect.innerHTML = '';
+
+    const autoOption = document.createElement('option');
+    autoOption.value = 'auto';
+    autoOption.textContent = t('popup_lang_auto', null, 'Auto (browser language)');
+    languageSelect.appendChild(autoOption);
+
+    locales.forEach((locale) => {
+      const option = document.createElement('option');
+      option.value = locale.code;
+      option.textContent = locale.label || locale.code;
+      languageSelect.appendChild(option);
+    });
+
+    if (localePreference !== 'auto' && !locales.some((locale) => locale.code === localePreference)) {
+      const fallbackOption = document.createElement('option');
+      fallbackOption.value = localePreference;
+      fallbackOption.textContent = localePreference;
+      languageSelect.appendChild(fallbackOption);
+    }
+
+    languageSelect.value = localePreference;
   }
 
   function initShortcutPreference() {
@@ -153,7 +224,9 @@
     shortcutPlatform = platform === 'mac' ? 'mac' : 'win';
     osWinBtn.classList.toggle('active', shortcutPlatform === 'win');
     osMacBtn.classList.toggle('active', shortcutPlatform === 'mac');
-    shortcutOsLabel.textContent = shortcutPlatform === 'mac' ? 'Mac' : 'Win';
+    shortcutOsLabel.textContent = shortcutPlatform === 'mac'
+      ? t('popup_os_mac', null, 'Mac')
+      : t('popup_os_win', null, 'Win');
     renderShortcutTable();
 
     if (shouldPersist) {
@@ -163,12 +236,15 @@
 
   function renderShortcutTable() {
     const key = shortcutPlatform === 'mac' ? 'mac' : 'win';
-    shortcutTableBody.innerHTML = SHORTCUT_ROWS.map((row) => `
+    shortcutTableBody.innerHTML = SHORTCUT_ROWS.map((row) => {
+      const label = t(row.labelKey, null, row.labelKey);
+      return `
       <tr>
-        <td>${escapeHtml(row.label)}</td>
+        <td>${escapeHtml(label)}</td>
         <td class="cell-key"><span class="kbd">${escapeHtml(row[key])}</span></td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function normalizeHexColor(value, fallback) {
@@ -229,7 +305,8 @@
       btn.className = 'palette-swatch';
       btn.dataset.color = color;
       btn.dataset.target = targetKey;
-      btn.title = `${targetKey === 'selected' ? '선택' : '검색'} 색상 ${color}`;
+      const titleKey = targetKey === 'selected' ? 'popup_palette_title_selected' : 'popup_palette_title_search';
+      btn.title = t(titleKey, { color }, `${targetKey} color ${color}`);
       btn.style.backgroundColor = color;
       btn.addEventListener('click', async () => {
         if (targetKey === 'selected') selectedColorInput.value = color;
@@ -282,15 +359,23 @@
     chrome.storage.local.set({ [HIGHLIGHT_COLOR_STORAGE_KEY]: normalized });
     const result = await sendToContent({ type: 'SET_HIGHLIGHT_COLORS', payload: normalized });
     if (shouldToast) {
-      showToast(result && result.ok ? '하이라이트 색상 적용됨' : '색상 저장됨');
+      showToast(
+        result && result.ok
+          ? t('popup_toast_highlight_applied', null, 'Highlight color applied')
+          : t('popup_toast_color_saved', null, 'Color saved')
+      );
     }
   }
 
   function setMarkerToggleButton(visible) {
     const isVisible = visible !== false;
     markerToggleBtn.dataset.visible = isVisible ? '1' : '0';
-    markerToggleBtn.textContent = isVisible ? '마커 숨김' : '마커 표시';
-    markerToggleBtn.title = isVisible ? '현재 마커 표시 중' : '현재 마커 숨김 중';
+    markerToggleBtn.textContent = isVisible
+      ? t('popup_marker_hide', null, 'Hide markers')
+      : t('popup_marker_show', null, 'Show markers');
+    markerToggleBtn.title = isVisible
+      ? t('popup_marker_title_visible', null, 'Markers are currently visible')
+      : t('popup_marker_title_hidden', null, 'Markers are currently hidden');
   }
 
   async function initMarkerVisibilityPreference() {
@@ -319,12 +404,19 @@
     if (result && typeof result.visible === 'boolean') {
       chrome.storage.local.set({ [MARKER_VISIBILITY_STORAGE_KEY]: result.visible });
       setMarkerToggleButton(result.visible);
-      showToast(result.visible ? '마커 표시' : '마커 숨김');
+      showToast(
+        result.visible
+          ? t('popup_toast_marker_shown', null, 'Markers shown')
+          : t('popup_toast_marker_hidden', null, 'Markers hidden')
+      );
     } else {
-      // 페이지와 통신 안 될 때도 로컬 상태는 업데이트 (storage 저장, 다음 페이지 로드 시 반영)
       chrome.storage.local.set({ [MARKER_VISIBILITY_STORAGE_KEY]: nextVisible });
       setMarkerToggleButton(nextVisible);
-      showToast((nextVisible ? '마커 표시' : '마커 숨김') + ' (페이지 새로고침 후 반영)');
+      showToast(
+        nextVisible
+          ? t('popup_toast_marker_shown_after_refresh', null, 'Markers shown (applies after page refresh)')
+          : t('popup_toast_marker_hidden_after_refresh', null, 'Markers hidden (applies after page refresh)')
+      );
     }
   }
 
@@ -343,10 +435,10 @@
   function renderToggle() {
     if (currentState.isActive) {
       toggleBtn.className = 'toggle-btn active';
-      toggleLabel.textContent = '선택 중 (클릭하여 중지)';
+      toggleLabel.textContent = t('popup_toggle_active', null, 'Selecting (click to stop)');
     } else {
       toggleBtn.className = 'toggle-btn inactive';
-      toggleLabel.textContent = '선택 시작';
+      toggleLabel.textContent = t('popup_toggle_start', null, 'Start Selecting');
     }
   }
 
@@ -361,8 +453,8 @@
   function renderStatusBar() {
     const url = currentState.url || '—';
     try {
-      const u = new URL(url);
-      statusUrl.textContent = u.hostname + u.pathname;
+      const parsed = new URL(url);
+      statusUrl.textContent = parsed.hostname + parsed.pathname;
     } catch {
       statusUrl.textContent = url;
     }
@@ -372,8 +464,7 @@
   function renderSelections() {
     const sels = currentState.selections;
 
-    // 기존 아이템 제거 (emptyState 제외)
-    Array.from(selectionList.children).forEach(child => {
+    Array.from(selectionList.children).forEach((child) => {
       if (child.id !== 'emptyState') child.remove();
     });
 
@@ -384,7 +475,6 @@
 
     emptyState.style.display = 'none';
 
-    // 역순으로 표시 (최신 선택이 위에)
     [...sels].reverse().forEach((sel, reverseIndex) => {
       const orderNumber = sels.length - reverseIndex;
       const item = buildSelItem(sel, orderNumber);
@@ -399,44 +489,45 @@
 
     const text = sel.innerText
       ? sel.innerText.slice(0, 60) + (sel.innerText.length > 60 ? '…' : '')
-      : '(텍스트 없음)';
+      : t('popup_selection_no_text', null, '(no text)');
 
     const bb = sel.boundingBox;
     const bbStr = bb ? `${bb.width}×${bb.height} @ (${bb.x},${bb.y})` : '';
+    const annotationHtml = sel.annotation ? `<div class="sel-annotation">${escapeHtml(sel.annotation)}</div>` : '';
 
-    const annotationHtml = sel.annotation
-      ? `<div class="sel-annotation">${escapeHtml(sel.annotation)}</div>`
-      : '';
+    const safeTagName = escapeHtml(sel.tagName || '');
+    const orderText = t(
+      'popup_selection_tag_order',
+      { tag: safeTagName, order: String(orderNumber) },
+      `${safeTagName} #${orderNumber}`
+    );
 
     item.innerHTML = `
       <div class="sel-item-header">
-        <span class="sel-tag">${escapeHtml(sel.tagName)} ${orderNumber}번</span>
+        <span class="sel-tag">${orderText}</span>
         <div class="sel-actions">
-          <button class="sel-btn edit-anno" title="주석 편집">편집</button>
-          <button class="sel-btn copy-sel" title="셀렉터 복사">복사</button>
-          <button class="sel-btn del" title="삭제">삭제</button>
+          <button class="sel-btn edit-anno" title="${escapeHtml(t('popup_selection_action_edit_title', null, 'Edit annotation'))}">${escapeHtml(t('popup_selection_action_edit', null, 'Edit'))}</button>
+          <button class="sel-btn copy-sel" title="${escapeHtml(t('popup_selection_action_copy_title', null, 'Copy selector'))}">${escapeHtml(t('popup_selection_action_copy', null, 'Copy'))}</button>
+          <button class="sel-btn del" title="${escapeHtml(t('popup_selection_action_delete_title', null, 'Delete'))}">${escapeHtml(t('popup_selection_action_delete', null, 'Delete'))}</button>
         </div>
       </div>
       <div class="sel-selector">${escapeHtml(sel.selector)}</div>
       <div class="sel-text">${escapeHtml(text)}</div>
       <div class="sel-anno-area">${annotationHtml}</div>
-      ${bbStr ? `<div class="sel-meta">${bbStr} · ${sel.strategy}</div>` : ''}
+      ${bbStr ? `<div class="sel-meta">${bbStr} · ${escapeHtml(sel.strategy || '')}</div>` : ''}
     `;
 
-    // 편집 버튼
     item.querySelector('.edit-anno').addEventListener('click', (e) => {
       e.stopPropagation();
       enterAnnotationEditMode(item, sel);
     });
 
-    // 복사 버튼
     item.querySelector('.copy-sel').addEventListener('click', (e) => {
       e.stopPropagation();
       copyToClipboard(sel.selector);
-      showToast('셀렉터 복사됨');
+      showToast(t('popup_toast_selector_copied', null, 'Selector copied'));
     });
 
-    // 삭제 버튼
     item.querySelector('.del').addEventListener('click', async (e) => {
       e.stopPropagation();
       const state = await sendToContent({ type: 'REMOVE_SELECTION', payload: { id: sel.id } });
@@ -454,10 +545,10 @@
     const currentText = sel.annotation || '';
 
     annoArea.innerHTML = `
-      <textarea class="anno-edit-input" rows="3" placeholder="주석 입력 (없으면 비워두세요)">${escapeHtml(currentText)}</textarea>
+      <textarea class="anno-edit-input" rows="3" placeholder="${escapeHtml(t('popup_annotation_placeholder', null, 'Enter annotation (optional)'))}">${escapeHtml(currentText)}</textarea>
       <div class="anno-edit-actions">
-        <button class="anno-cancel-btn">취소</button>
-        <button class="anno-save-btn">저장</button>
+        <button class="anno-cancel-btn">${escapeHtml(t('popup_annotation_cancel', null, 'Cancel'))}</button>
+        <button class="anno-save-btn">${escapeHtml(t('popup_annotation_save', null, 'Save'))}</button>
       </div>
     `;
 
@@ -475,7 +566,6 @@
       if (state) {
         applyState(state);
       } else {
-        // 통신 실패 시 로컬에서만 반영
         sel.annotation = newText;
         exitEditMode();
       }
@@ -492,14 +582,22 @@
       e.stopPropagation();
       doSave();
     });
+
     annoArea.querySelector('.anno-cancel-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       exitEditMode();
     });
+
     textarea.addEventListener('keydown', (e) => {
       e.stopPropagation();
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSave(); }
-      if (e.key === 'Escape') { e.preventDefault(); exitEditMode(); }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        doSave();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        exitEditMode();
+      }
     });
   }
 
@@ -510,7 +608,6 @@
     const wasActive = currentState.isActive;
     const state = await sendToContent({ type: 'TOGGLE_ACTIVE' });
     applyState(state);
-    // 비활성 → 활성 전환 시 팝업 닫기
     if (!wasActive && state && state.isActive) {
       window.close();
     }
@@ -530,13 +627,13 @@
     if (!currentState.selections.length) return;
     if (!clearAllConfirmArmed) {
       armClearAllConfirm();
-      showToast('한 번 더 누르면 전체 삭제');
+      showToast(t('popup_toast_clear_confirm', null, 'Press once more to clear all'));
       return;
     }
     resetClearAllConfirm();
     const state = await sendToContent({ type: 'CLEAR_ALL' });
     applyState(state);
-    showToast('전체 삭제됨');
+    showToast(t('popup_toast_clear_done', null, 'All selections cleared'));
   });
 
   document.addEventListener('click', (e) => {
@@ -560,16 +657,19 @@
       searchResult.style.display = 'none';
       return;
     }
+
     const result = await sendToContent({ type: 'SEARCH', payload: { query } });
     searchResult.style.display = 'block';
+
     if (!result) {
-      searchResult.innerHTML = '<span class="result-zero">페이지와 통신 실패</span>';
+      searchResult.innerHTML = `<span class="result-zero">${escapeHtml(t('popup_search_comm_error', null, 'Failed to communicate with the page'))}</span>`;
       return;
     }
+
     if (result.count === 0) {
-      searchResult.innerHTML = `<span class="result-zero">일치하는 요소 없음:</span> <code>${escapeHtml(query)}</code>`;
+      searchResult.innerHTML = `<span class="result-zero">${escapeHtml(t('popup_search_no_match', null, 'No matching elements:'))}</span> <code>${escapeHtml(query)}</code>`;
     } else {
-      searchResult.innerHTML = `<span class="result-count">${result.count}개</span> 요소 발견 — 설정한 검색 색상으로 표시`;
+      searchResult.innerHTML = `<span class="result-count">${result.count}</span> ${escapeHtml(t('popup_search_match_count', { count: String(result.count) }, `${result.count} elements found`))}`;
     }
   }
 
@@ -582,7 +682,7 @@
     const btn = e.target.closest('.format-btn');
     if (!btn) return;
     currentFormat = btn.dataset.format;
-    document.querySelectorAll('#formatSelector .format-btn').forEach(b => {
+    document.querySelectorAll('#formatSelector .format-btn').forEach((b) => {
       b.classList.toggle('active', b === btn);
     });
   });
@@ -593,19 +693,19 @@
 
   async function exportAction(format) {
     if (!currentState.selections.length) {
-      showToast('선택된 요소가 없습니다');
+      showToast(t('popup_toast_no_selection', null, '선택된 요소가 없습니다'));
       return;
     }
 
     const result = await sendToContent({ type: 'GET_EXPORT', payload: { format } });
     if (!result || !result.data) {
-      showToast('복사 실패');
+      showToast(t('popup_toast_copy_failed', null, '복사 실패'));
       return;
     }
 
     copyToClipboard(result.data);
     const formatLabel = { ai: 'AI용', json: '개발자용', plain: '공유용' }[format] || '';
-    showToast(`${formatLabel} 복사됨`);
+    showToast(`${formatLabel} ${t('popup_toast_copied', null, '복사됨')}`);
   }
 
   // ──────────────────────────────────────────
@@ -642,22 +742,12 @@
     });
   }
 
-  function downloadFile(content, filename, mime) {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
   let toastTimer = null;
 
   function armClearAllConfirm() {
     clearAllConfirmArmed = true;
-    clearAllBtn.textContent = '✕ 정말삭제?';
-    clearAllBtn.title = '한 번 더 누르면 전체 삭제';
+    clearAllBtn.textContent = t('popup_clear_all_confirm_button', null, '✕ Confirm clear?');
+    clearAllBtn.title = t('popup_clear_all_confirm_title', null, 'Press once more to clear all');
     clearTimeout(clearAllConfirmTimer);
     clearAllConfirmTimer = setTimeout(() => {
       resetClearAllConfirm();
@@ -679,25 +769,29 @@
     toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
 
-  // ──────────────────────────────────────────
-  // 초기화 — 현재 탭 가져와서 상태 요청
-  // ──────────────────────────────────────────
-  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-    if (!tabs || !tabs[0]) return;
-    currentTabId = tabs[0].id;
-    await initHighlightColorPreference();
-    await initMarkerVisibilityPreference();
+  async function bootstrap() {
+    await initI18n();
+    initShortcutPreference();
+    setHighlightColorInputs(DEFAULT_HIGHLIGHT_COLORS);
+    setMarkerToggleButton(true);
 
-    const state = await sendToContent({ type: 'GET_STATE' });
-    if (state) {
-      applyState(state);
-    } else {
-      // content script가 아직 없는 경우 (특수 페이지 등)
-      statusUrl.textContent = tabs[0].url || '—';
-      toggleBtn.disabled = true;
-      markerToggleBtn.disabled = true;
-      toggleLabel.textContent = '이 페이지에서 불가';
-    }
-  });
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      if (!tabs || !tabs[0]) return;
+      currentTabId = tabs[0].id;
+      await initHighlightColorPreference();
+      await initMarkerVisibilityPreference();
 
+      const state = await sendToContent({ type: 'GET_STATE' });
+      if (state) {
+        applyState(state);
+      } else {
+        statusUrl.textContent = tabs[0].url || '—';
+        toggleBtn.disabled = true;
+        markerToggleBtn.disabled = true;
+        toggleLabel.textContent = t('popup_toggle_unavailable', null, 'Not available on this page');
+      }
+    });
+  }
+
+  void bootstrap();
 })();
