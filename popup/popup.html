@@ -334,10 +334,6 @@
       white-space: nowrap; transition: background 0.15s;
     }
     .copy-main-btn:hover { background: var(--blue-d); }
-    .footer-mini {
-      display: flex;
-      justify-content: flex-end;
-    }
     .marker-toggle-btn {
       border: 1px solid var(--border);
       background: var(--bg3);
@@ -359,12 +355,12 @@
     }
     .footer-status {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 4px 12px 8px;
+      padding: 4px 3px 3px 12px;
       font-size: 10px; color: var(--text3);
     }
     .status-url {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      max-width: 240px;
+      max-width: 220px;
     }
 
     /* ── 설정 탭 ── */
@@ -722,12 +718,10 @@
         </div>
         <button class="copy-main-btn" id="copyBtn" data-i18n="popup_footer_copy">Copy</button>
       </div>
-      <div class="footer-mini">
-        <button class="marker-toggle-btn" id="markerToggleBtn" data-visible="1" data-i18n="popup_marker_hide">Hide markers</button>
-      </div>
     </div>
     <div class="footer-status">
       <span class="status-url" id="statusUrl">—</span>
+      <button class="marker-toggle-btn" id="markerToggleBtn" data-visible="1" data-i18n="popup_marker_hide">Hide markers</button>
     </div>
   </div>
 
