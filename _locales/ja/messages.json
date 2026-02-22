@@ -34,7 +34,9 @@
 
   "popup_settings_language_title": { "message": "言語" },
   "popup_settings_language_label": { "message": "表示言語" },
+  "popup_settings_language_help": { "message": "新しい言語JSONパッケージを追加すると、この一覧で選択できます。" },
   "popup_settings_shortcuts_title": { "message": "ショートカット" },
+  "popup_settings_shortcuts_aria": { "message": "ショートカットOS設定" },
   "popup_settings_shortcuts_feature": { "message": "機能" },
   "popup_os_win": { "message": "Win" },
   "popup_os_mac": { "message": "Mac" },
@@ -51,5 +53,58 @@
   "popup_footer_copy": { "message": "コピー" },
   "popup_format_ai": { "message": "AI用" },
   "popup_format_json": { "message": "開発者" },
-  "popup_format_plain": { "message": "共有用" }
+  "popup_format_plain": { "message": "共有用" },
+  "popup_marker_hide": { "message": "マーカー非表示" },
+  "popup_marker_show": { "message": "マーカー表示" },
+  "popup_marker_title_visible": { "message": "現在マーカー表示中" },
+  "popup_marker_title_hidden": { "message": "現在マーカー非表示中" },
+
+  "popup_shortcut_toggle": { "message": "選択モード切替" },
+  "popup_shortcut_undo": { "message": "元に戻す" },
+  "popup_shortcut_redo": { "message": "やり直し" },
+  "popup_shortcut_popover_cancel": { "message": "ポップオーバー取消/終了" },
+  "popup_shortcut_add": { "message": "注釈確定 (Add)" },
+  "popup_shortcut_newline": { "message": "ポップオーバー改行" },
+
+  "popup_palette_title_selected": { "message": "選択色 {color}" },
+  "popup_palette_title_search": { "message": "検索色 {color}" },
+
+  "popup_toast_highlight_applied": { "message": "ハイライト色を適用しました" },
+  "popup_toast_color_saved": { "message": "色を保存しました" },
+  "popup_toast_marker_shown": { "message": "マーカーを表示しました" },
+  "popup_toast_marker_hidden": { "message": "マーカーを非表示にしました" },
+  "popup_toast_marker_shown_after_refresh": { "message": "マーカーを表示（ページ更新後に反映）" },
+  "popup_toast_marker_hidden_after_refresh": { "message": "マーカーを非表示（ページ更新後に反映）" },
+
+  "popup_selection_no_text": { "message": "(テキストなし)" },
+  "popup_selection_tag_order": { "message": "{tag} {order}番" },
+  "popup_selection_action_edit": { "message": "編集" },
+  "popup_selection_action_copy": { "message": "コピー" },
+  "popup_selection_action_delete": { "message": "削除" },
+  "popup_selection_action_edit_title": { "message": "注釈を編集" },
+  "popup_selection_action_copy_title": { "message": "セレクターをコピー" },
+  "popup_selection_action_delete_title": { "message": "削除" },
+  "popup_toast_selector_copied": { "message": "セレクターをコピーしました" },
+
+  "popup_annotation_placeholder": { "message": "注釈を入力（空欄可）" },
+  "popup_annotation_cancel": { "message": "キャンセル" },
+  "popup_annotation_save": { "message": "保存" },
+
+  "popup_toast_clear_confirm": { "message": "もう一度押すと全削除します" },
+  "popup_toast_clear_done": { "message": "すべて削除しました" },
+
+  "popup_search_comm_error": { "message": "ページとの通信に失敗しました" },
+  "popup_search_no_match": { "message": "一致する要素がありません:" },
+  "popup_search_match_count": { "message": "{count}個の要素を検出 — 設定した検索色で表示" },
+
+  "popup_toast_no_selection": { "message": "選択された要素がありません" },
+  "popup_toast_copy_failed": { "message": "コピーに失敗しました" },
+  "popup_toast_copied": { "message": "コピーしました" },
+  "popup_toast_language_updated": { "message": "言語を変更しました" },
+  "popup_lang_auto": { "message": "自動（ブラウザ言語）" },
+
+  "overlay_counter_label": { "message": "選択" },
+  "overlay_popover_placeholder": { "message": "何を変更しますか？" },
+  "overlay_popover_cancel": { "message": "キャンセル" },
+  "overlay_popover_add": { "message": "追加" }
 }

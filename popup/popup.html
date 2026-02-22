@@ -309,6 +309,27 @@
     .format-row {
       display: flex; align-items: center; gap: 8px;
     }
+    .issue-link-btn {
+      width: 28px; height: 28px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      transition: all 0.12s ease;
+    }
+    .issue-link-btn:hover {
+      border-color: var(--blue);
+      color: #fff;
+      background: rgba(59, 130, 246, 0.28);
+    }
     .format-selector {
       display: flex; flex: 1;
       background: var(--bg3);
@@ -702,6 +723,15 @@
   <div class="footer">
     <div class="footer-export">
       <div class="format-row">
+        <a
+          class="issue-link-btn"
+          id="issueLinkBtn"
+          href="https://github.com/Sejin-999/agentation-chrome-extentions/issues/4"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open issue #4"
+          aria-label="Open issue #4"
+        >?</a>
         <div class="format-selector" id="formatSelector">
           <button class="format-btn active" data-format="ai" data-i18n="popup_format_ai">AI</button>
           <button class="format-btn" data-format="json" data-i18n="popup_format_json">Developer</button>

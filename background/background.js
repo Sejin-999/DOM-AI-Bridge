@@ -7,7 +7,8 @@ const tabActiveState = new Map();
 
 const I18N_STORAGE_KEY = 'agt_locale';
 const I18N_AUTO_VALUE = 'auto';
-const I18N_DEFAULT_LOCALE = 'ko';
+const I18N_DEFAULT_LOCALE = 'en';
+const I18N_KOREAN_FALLBACK_LOCALE = 'ko';
 const I18N_META_PATH = '_locales/languages.json';
 
 let localeMetaCache = null;
@@ -157,16 +158,16 @@ async function buildI18nState() {
     || resolveLocaleFromAvailable(meta.defaultLocale, availableCodes)
     || I18N_DEFAULT_LOCALE;
 
-  const fallbackMessages = await loadLocaleMessages(meta.defaultLocale || I18N_DEFAULT_LOCALE);
-  const localeMessages = resolvedLocale === meta.defaultLocale
-    ? fallbackMessages
-    : await loadLocaleMessages(resolvedLocale);
+  const defaultMessages = await loadLocaleMessages(meta.defaultLocale || I18N_DEFAULT_LOCALE);
+  const koreanFallbackMessages = await loadLocaleMessages(I18N_KOREAN_FALLBACK_LOCALE);
+  const localeMessages = await loadLocaleMessages(resolvedLocale);
 
   return {
     localePreference,
     locale: resolvedLocale,
     availableLocales,
-    messages: Object.assign({}, fallbackMessages, localeMessages)
+    // fallback priority: selected locale > English(default) > Korean
+    messages: Object.assign({}, koreanFallbackMessages, defaultMessages, localeMessages)
   };
 }
 
