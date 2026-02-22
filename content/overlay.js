@@ -46,6 +46,18 @@
   let counterDragHeight = 0;
   const selectedBoxMap = new Map(); // id → { box, badge, el }
 
+  function t(key, vars, fallback) {
+    if (window.__AGT_I18N && typeof window.__AGT_I18N.t === 'function') {
+      return window.__AGT_I18N.t(key, vars, fallback);
+    }
+    return typeof fallback === 'string' ? fallback : key;
+  }
+
+  function buildCounterInnerHtml(count, diffHtml) {
+    const label = escapeHtmlInner(t('overlay_counter_label', null, 'Selected'));
+    return `<span style="opacity:0.85;">${label}</span> <span style="color:#93c5fd;">${count}</span>${diffHtml || ''}`;
+  }
+
   /**
    * 오버레이 초기화
    */
@@ -113,7 +125,7 @@
       cursor: 'grab',
       userSelect: 'none'
     });
-    counterEl.innerHTML = '<span style="opacity:0.85;">선택</span> <span style="color:#93c5fd;">0</span>';
+    counterEl.innerHTML = buildCounterInnerHtml(0, '');
     counterEl.addEventListener('mousedown', onCounterDragStart, true);
     document.documentElement.appendChild(counterEl);
 
@@ -464,7 +476,7 @@
       ? ` <span style="margin-left:6px;color:${diffColor};font-weight:800;">${diffSign}</span>`
       : '';
 
-    counterEl.innerHTML = `<span style="opacity:0.85;">선택</span> <span style="color:#93c5fd;">${count}</span>${diffHtml}`;
+    counterEl.innerHTML = buildCounterInnerHtml(count, diffHtml);
     counterEl.style.display = 'block';
 
     if (isNumberChanged) {
@@ -647,6 +659,9 @@
 
     // 제목용 텍스트 (tag + 텍스트 미리보기)
     const titleText = `${info.tagName.toLowerCase()} "${(info.innerText || info.selector || '').slice(0, 40)}"`;
+    const notePlaceholder = t('overlay_popover_placeholder', null, 'What should change?');
+    const cancelLabel = t('overlay_popover_cancel', null, 'Cancel');
+    const addLabel = t('overlay_popover_add', null, 'Add');
 
     popoverEl = document.createElement('div');
     popoverEl.id = POPOVER_ID;
@@ -675,7 +690,7 @@
       </div>
       <textarea
         id="__agt-note-input__"
-        placeholder="What should change?"
+        placeholder="${escapeHtmlAttr(notePlaceholder)}"
         rows="3"
         style="
           width:100%;
@@ -697,12 +712,12 @@
           padding:6px 14px;border-radius:6px;
           background:transparent;border:1px solid #475569;
           color:#94a3b8;cursor:pointer;font-size:12px;font-weight:500;
-        ">Cancel</button>
+        ">${escapeHtmlInner(cancelLabel)}</button>
         <button id="__agt-add-btn__" style="
           padding:6px 16px;border-radius:6px;
           background:#3b82f6;border:none;
           color:#fff;cursor:pointer;font-size:12px;font-weight:600;
-        ">Add</button>
+        ">${escapeHtmlInner(addLabel)}</button>
       </div>
     `;
 
@@ -759,6 +774,40 @@
     }
     popoverCallbacks = null;
   };
+
+  window.__AGT.refreshOverlayI18n = function () {
+    if (counterEl) {
+      const count = Number.isFinite(lastCounterCount) ? lastCounterCount : 0;
+      counterEl.innerHTML = buildCounterInnerHtml(count, '');
+    }
+
+    if (popoverEl) {
+      const input = popoverEl.querySelector('#__agt-note-input__');
+      const cancelBtn = popoverEl.querySelector('#__agt-cancel-btn__');
+      const addBtn = popoverEl.querySelector('#__agt-add-btn__');
+
+      if (input) {
+        input.setAttribute(
+          'placeholder',
+          t('overlay_popover_placeholder', null, 'What should change?')
+        );
+      }
+      if (cancelBtn) {
+        cancelBtn.textContent = t('overlay_popover_cancel', null, 'Cancel');
+      }
+      if (addBtn) {
+        addBtn.textContent = t('overlay_popover_add', null, 'Add');
+      }
+    }
+  };
+
+  function escapeHtmlAttr(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   function escapeHtmlInner(str) {
     return String(str)

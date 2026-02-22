@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Agentation DOM Inspector",
+  "name": "__MSG_ext_name__",
   "version": "1.0.0",
-  "description": "DOM 요소 선택, 셀렉터 생성, JSON/Markdown Export — 오프라인 완전 동작",
+  "description": "__MSG_ext_description__",
+  "default_locale": "ko",
   "permissions": [
     "activeTab",
     "storage",
@@ -20,6 +21,7 @@
         "<all_urls>"
       ],
       "js": [
+        "shared/i18n.js",
         "content/dom-utils.js",
         "content/selector.js",
         "content/overlay.js",

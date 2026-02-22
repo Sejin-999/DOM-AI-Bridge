@@ -148,6 +148,7 @@
 
   function applyLocalizedStaticText() {
     window.__AGT_I18N.applyToDocument(document);
+    document.title = t('ext_name', null, document.title);
 
     const state = window.__AGT_I18N.getState();
     if (state && state.locale) {
@@ -495,12 +496,12 @@
     const bbStr = bb ? `${bb.width}×${bb.height} @ (${bb.x},${bb.y})` : '';
     const annotationHtml = sel.annotation ? `<div class="sel-annotation">${escapeHtml(sel.annotation)}</div>` : '';
 
-    const safeTagName = escapeHtml(sel.tagName || '');
-    const orderText = t(
+    const rawTagName = sel.tagName || '';
+    const orderText = escapeHtml(t(
       'popup_selection_tag_order',
-      { tag: safeTagName, order: String(orderNumber) },
-      `${safeTagName} #${orderNumber}`
-    );
+      { tag: rawTagName, order: String(orderNumber) },
+      `${rawTagName} #${orderNumber}`
+    ));
 
     item.innerHTML = `
       <div class="sel-item-header">
@@ -682,8 +683,8 @@
     const btn = e.target.closest('.format-btn');
     if (!btn) return;
     currentFormat = btn.dataset.format;
-    document.querySelectorAll('#formatSelector .format-btn').forEach((b) => {
-      b.classList.toggle('active', b === btn);
+    document.querySelectorAll('#formatSelector .format-btn').forEach((node) => {
+      node.classList.toggle('active', node === btn);
     });
   });
 
@@ -693,19 +694,18 @@
 
   async function exportAction(format) {
     if (!currentState.selections.length) {
-      showToast(t('popup_toast_no_selection', null, '선택된 요소가 없습니다'));
+      showToast(t('popup_toast_no_selection', null, 'No selected elements'));
       return;
     }
 
     const result = await sendToContent({ type: 'GET_EXPORT', payload: { format } });
     if (!result || !result.data) {
-      showToast(t('popup_toast_copy_failed', null, '복사 실패'));
+      showToast(t('popup_toast_copy_failed', null, 'Copy failed'));
       return;
     }
 
     copyToClipboard(result.data);
-    const formatLabel = { ai: 'AI용', json: '개발자용', plain: '공유용' }[format] || '';
-    showToast(`${formatLabel} ${t('popup_toast_copied', null, '복사됨')}`);
+    showToast(t('popup_toast_copied', null, 'Copied'));
   }
 
   // ──────────────────────────────────────────
