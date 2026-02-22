@@ -1,5 +1,5 @@
 {
-  "defaultLocale": "ko",
+  "defaultLocale": "en",
   "locales": [
     { "code": "ko", "label": "한국어" },
     { "code": "en", "label": "English" },
