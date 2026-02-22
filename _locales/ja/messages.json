@@ -2,7 +2,7 @@
   "ext_name": { "message": "Agentation DOM Inspector" },
   "ext_description": { "message": "DOM要素を選択し、セレクターを生成してJSON/Markdownをオフラインでエクスポートできます。" },
 
-  "popup_header_title": { "message": "DOM Inspector" },
+  "popup_header_title": { "message": "Agentation DOM Inspector" },
   "popup_toggle_start": { "message": "選択開始" },
   "popup_toggle_active": { "message": "選択中（クリックで停止）" },
   "popup_toggle_unavailable": { "message": "このページでは利用できません" },

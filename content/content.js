@@ -370,12 +370,24 @@
 
   function loadFromStorage() {
     const key = `agt_${location.hostname}`;
-    chrome.storage.local.get(key, (result) => {
-      if (chrome.runtime.lastError) return;
-      const saved = result[key];
-      if (saved && saved.url === location.href && Array.isArray(saved.selections)) {
-        State.selections = saved.selections;
-      }
+    return new Promise((resolve) => {
+      chrome.storage.local.get(key, (result) => {
+        if (chrome.runtime.lastError) {
+          State.selections = [];
+          resolve(false);
+          return;
+        }
+
+        const saved = result[key];
+        if (saved && saved.url === location.href && Array.isArray(saved.selections)) {
+          State.selections = saved.selections;
+          resolve(true);
+          return;
+        }
+
+        State.selections = [];
+        resolve(false);
+      });
     });
   }
 
@@ -574,17 +586,61 @@
   // SPA 라우트 변경 감지
   // ──────────────────────────────────────────
   let lastUrl = location.href;
+  let routeLoadToken = 0;
+
+  function handleRouteChange() {
+    const nextUrl = location.href;
+    if (nextUrl === lastUrl) return;
+    lastUrl = nextUrl;
+    routeLoadToken += 1;
+    const token = routeLoadToken;
+
+    // 페이지 전환 시 이전 페이지의 시각 상태를 즉시 제거
+    window.__AGT.clearAllHighlights();
+    window.__AGT.clearSearchHighlights();
+    window.__AGT.clearHover();
+    if (typeof window.__AGT.hideAnnotationPopover === 'function') {
+      window.__AGT.hideAnnotationPopover();
+    }
+
+    State.undoStack = [];
+    State.redoStack = [];
+    State.hoveredEl = null;
+
+    // 새 URL 기준 저장 상태 로드 (없으면 빈 상태 유지)
+    void loadFromStorage().then((hasSaved) => {
+      if (token !== routeLoadToken) return;
+      if (State.isActive && hasSaved) {
+        refreshHighlights();
+        syncHighlightOrderNumbers();
+      }
+      broadcastState();
+    });
+  }
+
+  function scheduleRouteCheck() {
+    setTimeout(handleRouteChange, 0);
+  }
+
+  function patchHistoryMethod(methodName) {
+    const original = history[methodName];
+    if (typeof original !== 'function') return;
+
+    history[methodName] = function patchedHistoryMethod() {
+      const result = original.apply(this, arguments);
+      scheduleRouteCheck();
+      return result;
+    };
+  }
+
+  patchHistoryMethod('pushState');
+  patchHistoryMethod('replaceState');
+
+  window.addEventListener('popstate', handleRouteChange, true);
+  window.addEventListener('hashchange', handleRouteChange, true);
 
   const routeObserver = new MutationObserver(() => {
-    if (location.href !== lastUrl) {
-      lastUrl = location.href;
-      // 라우트 변경 시 오버레이 초기화 (DOM이 바뀌었으므로 하이라이트 무효)
-      window.__AGT.clearAllHighlights();
-      State.undoStack = [];
-      State.redoStack = [];
-      // storage에서 새 페이지 데이터 로드
-      loadFromStorage();
-    }
+    handleRouteChange();
   });
 
   routeObserver.observe(document.body || document.documentElement, {
@@ -605,6 +661,12 @@
   void syncI18nState();
   loadHighlightColorsFromStorage();
   loadMarkerVisibilityFromStorage();
-  loadFromStorage();
+  void loadFromStorage().then((hasSaved) => {
+    if (State.isActive && hasSaved) {
+      refreshHighlights();
+      syncHighlightOrderNumbers();
+    }
+    broadcastState();
+  });
 
 })();

@@ -2,7 +2,7 @@
   "ext_name": { "message": "Agentation DOM Inspector" },
   "ext_description": { "message": "DOM 요소 선택, 셀렉터 생성, JSON/Markdown Export — 오프라인 완전 동작" },
 
-  "popup_header_title": { "message": "DOM Inspector" },
+  "popup_header_title": { "message": "Agentation DOM Inspector" },
   "popup_toggle_start": { "message": "선택 시작" },
   "popup_toggle_active": { "message": "선택 중 (클릭하여 중지)" },
   "popup_toggle_unavailable": { "message": "이 페이지에서 불가" },

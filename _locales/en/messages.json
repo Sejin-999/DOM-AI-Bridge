@@ -2,7 +2,7 @@
   "ext_name": { "message": "Agentation DOM Inspector" },
   "ext_description": { "message": "Select DOM elements, generate selectors, and export JSON/Markdown fully offline." },
 
-  "popup_header_title": { "message": "DOM Inspector" },
+  "popup_header_title": { "message": "Agentation DOM Inspector" },
   "popup_toggle_start": { "message": "Start Selecting" },
   "popup_toggle_active": { "message": "Selecting (click to stop)" },
   "popup_toggle_unavailable": { "message": "Not available on this page" },
