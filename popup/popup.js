@@ -1037,9 +1037,9 @@
       event: 'agentation.export',
       triggeredFormat,
       exports: {
-        ai: ai.data,
-        json: json.data,
-        plain: plain.data
+        AI: ai.data,
+        Developer: json.data,
+        Share: plain.data
       },
       meta: {
         url: currentState.url || '',
