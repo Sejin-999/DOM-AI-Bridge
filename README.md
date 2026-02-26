@@ -1,121 +1,212 @@
+<div align="right">
+  <a href="./README.md"><b>🇰🇷 한국어</b></a> &nbsp;|&nbsp;
+  <a href="./README.en.md">🇺🇸 English</a>
+</div>
 
-## 이 프로젝트는 <https://agentation.dev/> 에서 영감을 얻어 작업한 프로젝트입니다
+<br>
 
-## 여기서 지원되는 프레임워크를 사용한다면 여기를 활용하는 것도 좋은 방법입니다
+<div align="center">
+  <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
+  <h1>DOM AI Bridge</h1>
+  <p>웹 페이지의 DOM 요소를 직접 클릭해서 선택하고, AI 프롬프트로 바로 내보내는 Chrome 익스텐션</p>
+  <p>React, Vue 같은 특정 프레임워크 없이도 — JSP, Thymeleaf, Vanilla JS 모든 환경에서 동작합니다.</p>
 
-### 0. 시작의 이유
+  <br>
 
-  저는 한국에서 백엔드 개발자로 일하고 있습니다.
-  최근 바이브 코딩을 공부하면서 Agentation을 접했고, 흥미롭게 활용해왔습니다.
+  <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
+    <img src="https://img.shields.io/badge/version-1.0.1-blue" alt="version" />
+  </a>
+  <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
+  <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
+</div>
 
-  기존 Agentation은 React 기반 프로젝트에서 특히 강력한 개발 경험을 제공하지만,
-  저는 Thymeleaf, JSP 같은 Java 진영의 프론트엔드와 Vanilla JavaScript를 주로 사용하다 보니
-  적용 과정에서 제약과 불편함이 있었습니다.
+<br>
 
-  그래서 특정 프레임워크에 종속되지 않고,
-  어떤 웹 환경에서도 바로 사용할 수 있는 Agentation 스타일의 도구가 필요하다고 판단해
-  이 프로젝트를 시작하게 되었습니다.
+![DOM AI Bridge 메인 화면](./docs/images/2.png)
 
-**DOM AI Bridge**는 웹 페이지의 DOM을 직접 선택하고 주석화하여,  
-프레임워크에 종속되지 않는 AI 특화 워크플로우를 제공하는 브라우저 익스텐션입니다.
+---
 
-최근 확산되고 있는 **바이브 코딩(Vibe Coding)** 환경에서  
-프론트엔드 UI 수정, 변경 요청, 협업 커뮤니케이션을 AI와 더욱 효율적으로 연결하기 위해 설계되었습니다.
+<details>
+<summary><b>💡 왜 만들었나요?</b></summary>
+
+<br>
+
+저는 한국에서 백엔드 개발자로 일하고 있습니다.
+최근 바이브 코딩을 공부하면서 [Agentation](https://agentation.dev/)을 접했고, 흥미롭게 활용해왔습니다.
+
+기존 Agentation은 React 기반 프로젝트에서 특히 강력한 개발 경험을 제공하지만,
+저는 Thymeleaf, JSP 같은 Java 진영의 프론트엔드와 Vanilla JavaScript를 주로 사용하다 보니
+적용 과정에서 제약과 불편함이 있었습니다.
+
+그래서 특정 프레임워크에 종속되지 않고,
+어떤 웹 환경에서도 바로 사용할 수 있는 Agentation 스타일의 도구가 필요하다고 판단해
+이 프로젝트를 시작하게 되었습니다.
+
+</details>
+
+---
+
+## 사용 방법
+
+**4단계면 됩니다.**
+
+| 단계 | 설명 |
+|------|------|
+| 1. 익스텐션 실행 | 팝업에서 **Start Selecting** 클릭 |
+| 2. 요소 선택 | 페이지에서 원하는 DOM 요소 클릭 |
+| 3. 주석 입력 | 팝업에서 *"이 부분 이렇게 바꿔줘"* 입력 |
+| 4. 내보내기 | 포맷 선택 후 **Copy** → AI에 붙여넣기 |
+
+<table>
+  <tr>
+    <td align="center"><b>① 기본 화면</b></td>
+    <td align="center"><b>② 요소 선택됨</b></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/images/1.png" alt="기본 화면" /></td>
+    <td><img src="./docs/images/2.png" alt="요소 선택" /></td>
+  </tr>
+</table>
+
+---
+
+## 내보내기 포맷
+
+선택한 요소들을 목적에 맞는 포맷으로 바로 변환합니다.
+
+### 🤖 AI용 (Claude, Cursor 등 AI 프롬프트에 최적화)
+
+```markdown
+# UI Annotations
+**Page:** https://example.com
+**Elements:** 2
+
+---
+**[1] BUTTON** `button.primary`
+Text: "로그인"
+> 버튼 색상을 파란색으로 변경해주세요
+
+---
+**[2] H1** `#main-title`
+Text: "환영합니다"
+> 폰트 사이즈를 키워주세요
+```
+
+### 👨‍💻 개발자용 (셀렉터 전략, 위치 등 상세 정보 포함)
+
+```markdown
+## DOM Selections — https://example.com
+> Total: 2 elements
+
+### 1. BUTTON — "로그인"
+- **Selector**: `button.primary`
+- **Strategy**: class
+- **Position**: (120, 340) 80×36px
+- **Annotation**: 버튼 색상을 파란색으로 변경해주세요
+```
+
+### 🔗 공유용 (디자이너, 기획자와 텍스트로 공유)
+
+```
+UI 주석 — https://example.com
+총 2개 요소
+
+1. BUTTON (button.primary)
+   텍스트: "로그인"
+   주석: 버튼 색상을 파란색으로 변경해주세요
+```
 
 ---
 
 ## 주요 기능
 
-### 1. DOM 기반 주석 시스템
+### DOM 선택 & 주석
+- 클릭으로 요소 선택, 순번 배지 자동 표시
+- 주석 입력 팝오버 (Enter로 빠르게 추가)
+- Undo / Redo 지원 (최대 50단계)
+- CSS 셀렉터 자동 생성 (ID → 시맨틱 속성 → 클래스 → 경로 순)
 
-- 웹 페이지의 DOM 요소를 직접 선택
-    
-- 주석 작성 및 관리 프로세스 제공
-    
-- UI 변경 요청을 구조화된 형태로 기록 가능
-    
+### 검색
+- CSS 셀렉터로 페이지 내 요소 검색 및 하이라이트
 
-### 2. 목적별 변환 포맷 지원
+### 설정
 
-주석 내용을 다음 목적에 맞게 자동 변환:
+<table>
+  <tr>
+    <td align="center"><b>언어 설정</b></td>
+    <td align="center"><b>하이라이트 색상</b></td>
+    <td align="center"><b>WebHook</b></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/images/3.png" alt="언어 설정" /></td>
+    <td><img src="./docs/images/4.png" alt="색상 설정" /></td>
+    <td><img src="./docs/images/5.png" alt="WebHook 설정" /></td>
+  </tr>
+</table>
 
-- AI 전달용 포맷
-    
-- 개발자 공유용 포맷
-    
-- 외부 공유(Form) 포맷
-    
-
-업무 단위에 맞는 형태로 즉시 활용할 수 있습니다.
-
-### 3. WebHook 기반 공유
-
-- WebHook을 통한 외부 송신 지원
-    
-- 내부 시스템, 협업 툴, 자동화 서버와 연동 가능
-    
-- 폐쇄망 환경에서도 안전한 전송 라인 구성 가능
-    
-
-### 4. 커스터마이징 기능
-
-- 다양한 사용자 설정 옵션 제공
-    
-- 실제 개발 워크플로우에 맞춘 확장성 보장
-    
+- **다국어**: 한국어 / English / 日本語
+- **색상 커스터마이징**: 선택/검색 하이라이트 색상 변경
+- **WebHook**: 외부 서버로 주석 데이터 자동 전송 (최대 3개 타겟)
+- **단축키**: `Ctrl/Cmd + Shift + X` 토글, `Esc` 종료, `Ctrl+Z` 실행 취소
 
 ---
 
-## 개발 예정 기능
+## 설치 방법
 
-### MCP 서버 기반 AI 자동화 프레임워크
+### Chrome Web Store (준비 중)
+> 심사 완료 후 링크가 업데이트됩니다.
 
-- MCP 서버를 활용한 AI 연동 자동화 지원 예정
-    
-- DOM → AI → 코드 반영까지 이어지는 자동화 흐름 확장
-    
+### 개발자 모드로 직접 설치
+
+```bash
+# 1. 레포 클론
+git clone https://github.com/Sejin-999/DOM-AI-Bridge.git
+
+# 2. Chrome 주소창에 입력
+chrome://extensions/
+
+# 3. 우측 상단 "개발자 모드" 활성화
+# 4. "압축 해제된 확장 프로그램 로드" 클릭
+# 5. 클론한 폴더 선택
+```
 
 ---
 
-## Privacy & Data
+## 개발 예정
 
-- 모든 수집 및 처리 과정은 **로컬 환경에서만 동작**
-    
+### MCP 서버 기반 AI 자동화
+
+현재는 Copy → 붙여넣기의 수동 플로우이지만,
+MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 자동화할 예정입니다.
+
+- 로컬 서버 레포: [DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
+
+---
+
+## Privacy
+
+- 모든 데이터는 **로컬에서만 처리**
 - 외부 서버에 사용자 데이터 저장 없음
-    
-- 관리한 내용을 제3자가 확인할 수 없음
-    
 - 폐쇄망 환경에서도 사용 가능
-    
+
+자세한 내용: [개인정보처리방침](./PRIVACY.md)
 
 ---
 
 ## 오픈소스
 
-프로젝트는 오픈소스로 관리됩니다.
+누구나 코드에 접근하고 개선에 참여할 수 있습니다.
 
-- 메인 저장소  
-    [https://github.com/Sejin-999/DOM-AI-Bridge](https://github.com/Sejin-999/DOM-AI-Bridge)
-    
-- 로컬 서버 (AI 수신용)  
-    [https://github.com/Sejin-999/DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
-    
+- 메인 저장소: [Sejin-999/DOM-AI-Bridge](https://github.com/Sejin-999/DOM-AI-Bridge)
+- 서버 저장소: [Sejin-999/DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
 
-누구나 코드에 접근하고 개선에 참여할 수 있습니다.  
-추후 공식 웹사이트 오픈 시 커뮤니티 기능도 함께 제공할 예정입니다.
+### 기여 방법
 
----
+PR은 두 가지 유형으로 받습니다.
 
-## 프로젝트 목표
+| 유형 | PR 제목 형식 | 설명 |
+|------|-------------|------|
+| 기능 추가 | `Feat: 기능 설명` | 새로운 기능 구현 또는 버그 수정 |
+| 언어 번역 | `Lang: 언어명` | 새로운 언어 번역 추가 또는 기존 번역 개선 |
 
-모든 개발자, 바이브 코더, IT 직군 종사자들이  
-UI 변경 사항을 AI와 더 명확하고 구조적으로 소통할 수 있도록 지원하는 것.
-
----
-
-프로젝트가 도움이 되었다면 GitHub ⭐ Star로 응원해주시기 바랍니다.
-
-
-### 2. 개인정보처리방침
-
-- [Privacy Policy / 개인정보처리방침](./PRIVACY.md)
+프로젝트가 도움이 되었다면 GitHub ⭐ Star로 응원해주세요!
