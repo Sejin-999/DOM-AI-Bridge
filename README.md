@@ -9,7 +9,8 @@
   <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
   <h1>DOM AI Bridge</h1>
   <p>웹 페이지의 DOM 요소를 직접 클릭해서 선택하고, AI 프롬프트로 바로 내보내는 Chrome 익스텐션</p>
-  <p>React, Vue 같은 특정 프레임워크 없이도 — JSP, Thymeleaf, Vanilla JS 모든 환경에서 동작합니다.</p>
+  <p>가상 DOM에 의존하지 않고 실제 DOM을 직접 읽기 때문에, <b>모든 웹 환경에서 동작합니다.</b></p>
+  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">공식 사이트</a> (개발중)</p>
 
   <br>
 
@@ -22,7 +23,7 @@
 
 <br>
 
-![DOM AI Bridge 메인 화면](./docs/images/2.png)
+![DOM AI Bridge 메인 화면](./docs/images/1.png)
 
 ---
 
@@ -59,8 +60,8 @@
 
 <table>
   <tr>
-    <td align="center"><b>① 기본 화면</b></td>
-    <td align="center"><b>② 요소 선택됨</b></td>
+    <td align="center"><b>① 요소 선택</b></td>
+    <td align="center"><b>② 검색 기능</b></td>
   </tr>
   <tr>
     <td><img src="./docs/images/1.png" alt="기본 화면" /></td>
@@ -172,14 +173,39 @@ chrome://extensions/
 
 ---
 
-## 개발 예정
+## AI 에이전트와 연결하기
 
-### MCP 서버 기반 AI 자동화
+DOM AI Bridge는 두 가지 플로우를 지원합니다.
 
-현재는 Copy → 붙여넣기의 수동 플로우이지만,
-MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 자동화할 예정입니다.
+### 수동 플로우 (기본)
 
-- 로컬 서버 레포: [DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
+```
+익스텐션에서 Copy → AI 도구에 직접 붙여넣기
+```
+
+### 로컬 브리지 서버 (자동화)
+
+[DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)를 함께 사용하면
+**Claude Code, Cursor 같은 CLI 기반 AI 에이전트에 바로 전달**할 수 있습니다.
+
+```
+익스텐션 WebHook → 로컬 서버(127.0.0.1:4180) → 브리지 클라이언트 → AI 에이전트
+```
+
+브리지 클라이언트는 4가지 전달 방식을 지원합니다:
+
+| 모드 | 설명 |
+|------|------|
+| `stdout` | 콘솔에 출력 |
+| `clipboard` | 클립보드에 복사 |
+| `frontmost` | 현재 포커스된 앱에 자동 붙여넣기 (Cursor, Claude 등) |
+| `tmux` | 지정한 tmux pane에 전송 |
+
+→ 서버 레포: [Sejin-999/DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
+
+### 개발 예정: MCP 서버
+
+MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 깊은 자동화를 지원할 예정입니다.
 
 ---
 

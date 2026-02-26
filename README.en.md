@@ -9,7 +9,8 @@
   <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
   <h1>DOM AI Bridge</h1>
   <p>A Chrome extension that lets you click DOM elements on any webpage and export them directly as AI prompts.</p>
-  <p>Works on <b>any web environment</b> — JSP, Thymeleaf, Vanilla JS, and more. No framework required.</p>
+  <p>Reads the real DOM directly — no virtual DOM dependency. Works on <b>any web environment</b>.</p>
+  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">Official site</a> (in development)</p>
 
   <br>
 
@@ -22,7 +23,7 @@
 
 <br>
 
-![DOM AI Bridge main screen](./docs/images/2.png)
+![DOM AI Bridge main screen](./docs/images/1.png)
 
 ---
 
@@ -55,8 +56,8 @@ So I decided to build a framework-agnostic tool that works out of the box on any
 
 <table>
   <tr>
-    <td align="center"><b>① Default state</b></td>
-    <td align="center"><b>② Elements selected</b></td>
+    <td align="center"><b>① Elements selected</b></td>
+    <td align="center"><b>② Search feature</b></td>
   </tr>
   <tr>
     <td><img src="./docs/images/1.png" alt="Default state" /></td>
@@ -168,14 +169,38 @@ chrome://extensions/
 
 ---
 
-## Roadmap
+## Connecting with AI agents
 
-### MCP server-based AI automation
+DOM AI Bridge supports two flows.
 
-Currently, the flow is manual: Copy → paste into AI.
-With MCP server integration, the goal is full automation: **select DOM → AI → code applied**.
+### Manual flow (default)
 
-- Server repo: [DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
+```
+Copy in extension → paste directly into your AI tool
+```
+
+### Local bridge server (automated)
+
+Use [DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server) alongside the extension to **send annotations directly to CLI-based AI agents** like Claude Code or Cursor — no manual pasting required.
+
+```
+Extension WebHook → local server (127.0.0.1:4180) → bridge client → AI agent
+```
+
+The bridge client supports 4 delivery modes:
+
+| Mode | Description |
+|------|-------------|
+| `stdout` | Print to console |
+| `clipboard` | Copy to clipboard |
+| `frontmost` | Auto-paste into the focused app (Cursor, Claude, etc.) |
+| `tmux` | Send to a specified tmux pane |
+
+→ Server repo: [Sejin-999/DOM-AI-Bridge-Server](https://github.com/Sejin-999/DOM-AI-Bridge-Server)
+
+### Coming soon: MCP server
+
+MCP server integration is planned for deeper automation — **select DOM → AI → code applied** end-to-end.
 
 ---
 
