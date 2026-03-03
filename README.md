@@ -233,11 +233,41 @@ MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 �
 
 ### 기여 방법
 
-PR은 두 가지 유형으로 받습니다.
+| 유형 | 형식 | 설명 | 배지 |
+|------|------|------|:----:|
+| 기능 추가 | PR — `Feat: 기능 설명` | 새로운 기능 구현 또는 버그 수정 | 💻 |
+| 언어 번역 | PR — `Lang: 언어명` | 새로운 언어 번역 추가 또는 기존 번역 개선 | 📖 |
+| 아이디어 제안 | Issue — `Idea: 아이디어 설명` | 기능 아이디어 또는 개선 제안 | 🤔 |
 
-| 유형 | PR 제목 형식 | 설명 |
-|------|-------------|------|
-| 기능 추가 | `Feat: 기능 설명` | 새로운 기능 구현 또는 버그 수정 |
-| 언어 번역 | `Lang: 언어명` | 새로운 언어 번역 추가 또는 기존 번역 개선 |
+### Contributors
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="120px">
+        <a href="https://github.com/Sejin-999">
+          <img src="https://github.com/Sejin-999.png?size=60" width="60px;" alt="Sejin"/>
+          <br /><sub><b>Sejin</b></sub>
+        </a>
+        <br />💻 🤔 📖 🎨
+      </td>
+      <td align="center" valign="top" width="120px">
+        <a href="https://github.com/mbk1991">
+          <img src="https://github.com/mbk1991.png?size=60" width="60px;" alt="mbk1991"/>
+          <br /><sub><b>mbk1991</b></sub>
+        </a>
+        <br />🤔
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 프로젝트가 도움이 되었다면 GitHub ⭐ Star로 응원해주세요!

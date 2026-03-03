@@ -45,6 +45,7 @@
   let counterDragWidth = 0;
   let counterDragHeight = 0;
   const selectedBoxMap = new Map(); // id → { box, badge, el }
+  const searchBoxEntries = []; // [{ box, el }]
 
   function t(key, vars, fallback) {
     if (window.__AGT_I18N && typeof window.__AGT_I18N.t === 'function') {
@@ -195,12 +196,10 @@
       if (badge) badge.style.background = COLORS.selected.border;
     });
 
-    if (overlayEl) {
-      overlayEl.querySelectorAll('[data-search-highlight]').forEach((el) => {
-        el.style.border = `2px solid ${COLORS.search.border}`;
-        el.style.background = COLORS.search.bg;
-      });
-    }
+    searchBoxEntries.forEach(({ box }) => {
+      box.style.border = `2px solid ${COLORS.search.border}`;
+      box.style.background = COLORS.search.bg;
+    });
   }
 
   function clamp(value, min, max) {
@@ -274,16 +273,21 @@
         box.style.display = 'none';
         if (badge) badge.style.display = 'none';
       });
-      overlayEl.querySelectorAll('[data-search-highlight]').forEach((el) => {
-        el.style.display = 'none';
+      searchBoxEntries.forEach(({ box }) => {
+        box.style.display = 'none';
       });
       return;
     }
 
     scheduleUpdate();
-    overlayEl.querySelectorAll('[data-search-highlight]').forEach((el) => {
-      el.style.display = 'block';
+    searchBoxEntries.forEach(({ box }) => {
+      box.style.display = 'block';
     });
+  }
+
+  function clearSearchHighlightEntries() {
+    searchBoxEntries.forEach(({ box }) => box.remove());
+    searchBoxEntries.length = 0;
   }
 
   function createOrderBadge(orderNumber) {
@@ -553,28 +557,27 @@
    * @param {NodeList|Array} elements
    */
   window.__AGT.showSearchHighlights = function (elements) {
-    // 기존 검색 박스 제거
-    if (overlayEl) {
-      overlayEl.querySelectorAll('[data-search-highlight]').forEach(el => el.remove());
-    }
+    clearSearchHighlightEntries();
     if (!overlayEl) window.__AGT.initOverlay();
 
     elements.forEach(el => {
+      if (!(el instanceof Element)) return;
       const box = createBox(COLORS.search);
       const rect = getFixedRect(el);
       positionBox(box, rect);
       box.dataset.searchHighlight = '1';
       box.style.display = markersVisible ? 'block' : 'none';
       overlayEl.appendChild(box);
+      searchBoxEntries.push({ box, el });
     });
+    scheduleUpdate();
   };
 
   /**
    * 검색 하이라이트 제거
    */
   window.__AGT.clearSearchHighlights = function () {
-    if (!overlayEl) return;
-    overlayEl.querySelectorAll('[data-search-highlight]').forEach(el => el.remove());
+    clearSearchHighlightEntries();
   };
 
   /**
@@ -596,7 +599,17 @@
       }
     });
 
-    // 검색 박스도 업데이트 (검색 결과 요소 추적은 생략 — 검색 재실행으로 처리)
+    for (let i = searchBoxEntries.length - 1; i >= 0; i -= 1) {
+      const entry = searchBoxEntries[i];
+      if (!document.contains(entry.el)) {
+        entry.box.remove();
+        searchBoxEntries.splice(i, 1);
+        continue;
+      }
+      const rect = getFixedRect(entry.el);
+      positionBox(entry.box, rect);
+      entry.box.style.display = markersVisible ? 'block' : 'none';
+    }
 
     // 호버 박스 업데이트
     if (currentHoverTarget) {
@@ -836,6 +849,7 @@
       counterEl = null;
     }
     selectedBoxMap.clear();
+    clearSearchHighlightEntries();
     currentHoverTarget = null;
     if (rafId) {
       cancelAnimationFrame(rafId);

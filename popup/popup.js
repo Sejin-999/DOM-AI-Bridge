@@ -10,6 +10,7 @@
   let currentState = {
     isActive: false,
     selections: [],
+    selectionCount: 0,
     canUndo: false,
     canRedo: false,
     url: ''
@@ -192,7 +193,7 @@
         resolve(null);
         return;
       }
-      chrome.tabs.sendMessage(currentTabId, message, (response) => {
+      chrome.tabs.sendMessage(currentTabId, message, { frameId: 0 }, (response) => {
         if (chrome.runtime.lastError) {
           resolve(null);
         } else {
@@ -1043,7 +1044,9 @@
       },
       meta: {
         url: currentState.url || '',
-        selectionCount: currentState.selections.length,
+        selectionCount: Number.isFinite(currentState.selectionCount)
+          ? currentState.selectionCount
+          : currentState.selections.length,
         locale: (i18nState && i18nState.locale) || 'en',
         sentAt: new Date().toISOString()
       }
@@ -1176,7 +1179,9 @@
   }
 
   function renderToolbar() {
-    const count = currentState.selections.length;
+    const count = Number.isFinite(currentState.selectionCount)
+      ? currentState.selectionCount
+      : currentState.selections.length;
     selCount.textContent = count;
     tabCount.textContent = count > 0 ? `(${count})` : '';
     undoBtn.disabled = !currentState.canUndo;
@@ -1208,16 +1213,20 @@
 
     emptyState.style.display = 'none';
 
-    [...sels].reverse().forEach((sel, reverseIndex) => {
-      const orderNumber = sels.length - reverseIndex;
+    sels.forEach((sel, index) => {
+      const orderNumber = index + 1;
       const item = buildSelItem(sel, orderNumber);
-      selectionList.insertBefore(item, emptyState.nextSibling || null);
+      selectionList.insertBefore(item, emptyState);
     });
   }
 
   function buildSelItem(sel, orderNumber) {
+    if (sel && sel.isFrameRoot) {
+      return buildFrameRootItem(sel, orderNumber);
+    }
+
     const item = document.createElement('div');
-    item.className = 'sel-item';
+    item.className = sel && sel.isFrameChild ? 'sel-item sel-item-frame-child' : 'sel-item';
     item.dataset.id = sel.id;
 
     const text = sel.innerText
@@ -1229,11 +1238,15 @@
     const annotationHtml = sel.annotation ? `<div class="sel-annotation">${escapeHtml(sel.annotation)}</div>` : '';
 
     const rawTagName = sel.tagName || '';
+    const tagPrefix = sel && sel.isFrameChild ? '↳ ' : '';
     const orderText = escapeHtml(t(
       'popup_selection_tag_order',
-      { tag: rawTagName, order: String(orderNumber) },
-      `${rawTagName} #${orderNumber}`
+      { tag: `${tagPrefix}${rawTagName}`, order: String(orderNumber) },
+      `${tagPrefix}${rawTagName} #${orderNumber}`
     ));
+    const frameMeta = sel && sel.isFrameChild
+      ? `<div class="sel-frame-meta">${escapeHtml(sel.frameLabel || 'iframe')} · ${escapeHtml(sel.frameUrl || '')}</div>`
+      : '';
 
     item.innerHTML = `
       <div class="sel-item-header">
@@ -1245,6 +1258,7 @@
         </div>
       </div>
       <div class="sel-selector">${escapeHtml(sel.selector)}</div>
+      ${frameMeta}
       <div class="sel-text">${escapeHtml(text)}</div>
       <div class="sel-anno-area">${annotationHtml}</div>
       ${bbStr ? `<div class="sel-meta">${bbStr} · ${escapeHtml(sel.strategy || '')}</div>` : ''}
@@ -1258,6 +1272,61 @@
     item.querySelector('.copy-sel').addEventListener('click', (e) => {
       e.stopPropagation();
       copyToClipboard(sel.selector);
+      showToast(t('popup_toast_selector_copied', null, 'Selector copied'));
+    });
+
+    item.querySelector('.del').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const state = await sendToContent({ type: 'REMOVE_SELECTION', payload: { id: sel.id } });
+      applyState(state);
+    });
+
+    return item;
+  }
+
+  function buildFrameRootItem(sel, orderNumber) {
+    const item = document.createElement('div');
+    item.className = 'sel-item sel-item-frame-root';
+    item.dataset.id = sel.id;
+
+    const childCount = Number.isFinite(sel.childCount) ? sel.childCount : 0;
+    const canEditAnnotation = !sel.syntheticFrameRoot;
+    const titleText = escapeHtml(`IFRAME #${orderNumber}`);
+    const frameTitle = escapeHtml(sel.frameTitle || sel.frameLabel || '(untitled frame)');
+    const frameUrl = escapeHtml(sel.frameUrl || '');
+    const frameSelector = escapeHtml(sel.selector || 'iframe');
+    const annotationHtml = sel.annotation
+      ? `<div class="sel-annotation">${escapeHtml(sel.annotation)}</div>`
+      : '';
+    const editBtn = canEditAnnotation
+      ? `<button class="sel-btn edit-anno" title="${escapeHtml(t('popup_selection_action_edit_title', null, 'Edit annotation'))}">${escapeHtml(t('popup_selection_action_edit', null, 'Edit'))}</button>`
+      : '';
+
+    item.innerHTML = `
+      <div class="sel-item-header">
+        <span class="sel-tag">${titleText}</span>
+        <div class="sel-actions">
+          ${editBtn}
+          <button class="sel-btn copy-sel" title="${escapeHtml(t('popup_selection_action_copy_title', null, 'Copy selector'))}">${escapeHtml(t('popup_selection_action_copy', null, 'Copy'))}</button>
+          <button class="sel-btn del" title="${escapeHtml(t('popup_selection_action_delete_title', null, 'Delete'))}">${escapeHtml(t('popup_selection_action_delete', null, 'Delete'))}</button>
+        </div>
+      </div>
+      <div class="sel-selector">${frameSelector}</div>
+      <div class="sel-text">Frame: ${frameTitle}</div>
+      <div class="sel-anno-area">${annotationHtml}</div>
+      <div class="sel-meta">Children: ${childCount}${frameUrl ? ` · ${frameUrl}` : ''}</div>
+    `;
+
+    if (canEditAnnotation) {
+      item.querySelector('.edit-anno').addEventListener('click', (e) => {
+        e.stopPropagation();
+        enterAnnotationEditMode(item, sel);
+      });
+    }
+
+    item.querySelector('.copy-sel').addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyToClipboard(sel.selector || 'iframe');
       showToast(t('popup_toast_selector_copied', null, 'Selector copied'));
     });
 
@@ -1357,7 +1426,10 @@
   });
 
   clearAllBtn.addEventListener('click', async () => {
-    if (!currentState.selections.length) return;
+    const currentCount = Number.isFinite(currentState.selectionCount)
+      ? currentState.selectionCount
+      : currentState.selections.length;
+    if (!currentCount) return;
     if (!clearAllConfirmArmed) {
       armClearAllConfirm();
       showToast(t('popup_toast_clear_confirm', null, 'Press once more to clear all'));
@@ -1425,7 +1497,10 @@
   });
 
   async function exportAction(format) {
-    if (!currentState.selections.length) {
+    const currentCount = Number.isFinite(currentState.selectionCount)
+      ? currentState.selectionCount
+      : currentState.selections.length;
+    if (!currentCount) {
       showToast(t('popup_toast_no_selection', null, 'No selected elements'));
       return;
     }

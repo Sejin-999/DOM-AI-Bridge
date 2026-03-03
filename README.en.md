@@ -226,11 +226,41 @@ Anyone can access the code and contribute.
 
 ### How to contribute
 
-We accept PRs in two types.
+| Type | Format | Description | Badge |
+|------|--------|-------------|:-----:|
+| Feature | PR — `Feat: description` | New feature implementation or bug fix | 💻 |
+| Translation | PR — `Lang: language name` | Add a new language or improve existing translations | 📖 |
+| Idea | Issue — `Idea: description` | Feature ideas or improvement suggestions | 🤔 |
 
-| Type | PR title format | Description |
-|------|----------------|-------------|
-| Feature | `Feat: description` | New feature implementation or bug fix |
-| Translation | `Lang: language name` | Add a new language or improve existing translations |
+### Contributors
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="120px">
+        <a href="https://github.com/Sejin-999">
+          <img src="https://github.com/Sejin-999.png?size=60" width="60px;" alt="Sejin"/>
+          <br /><sub><b>Sejin</b></sub>
+        </a>
+        <br />💻 🤔 📖 🎨
+      </td>
+      <td align="center" valign="top" width="120px">
+        <a href="https://github.com/mbk1991">
+          <img src="https://github.com/mbk1991.png?size=60" width="60px;" alt="mbk1991"/>
+          <br /><sub><b>mbk1991</b></sub>
+        </a>
+        <br />🤔
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 If this helped you, a GitHub ⭐ Star would mean a lot!
