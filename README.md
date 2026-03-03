@@ -9,7 +9,9 @@
   <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
   <h1>DOM AI Bridge</h1>
 
-  <h2><a href = "https://mail.google.com/mail/u/1/#inbox/FMfcgzQfCDRsCBPbTQDcMJBZWnxDkmhS">클락하여 설치하세요!</a></h2>
+  <h2><a href = "https://mail.google.com/mail/u/1/#inbox/FMfcgzQfCDRsCBPbTQDcMJBZWnxDkmhS">클릭하여 설치하세요!</a></h2>
+  
+  <br>
   
   <p>웹 페이지의 DOM 요소를 직접 클릭해서 선택하고, AI 프롬프트로 바로 내보내는 Chrome 익스텐션</p>
   <p>가상 DOM에 의존하지 않고 실제 DOM을 직접 읽기 때문에, <b>모든 웹 환경에서 동작합니다.</b></p>
