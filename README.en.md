@@ -232,6 +232,8 @@ Anyone can access the code and contribute.
 | Translation | PR — `Lang: language name` | Add a new language or improve existing translations | 📖 |
 | Idea | Issue — `Idea: description` | Feature ideas or improvement suggestions | 🤔 |
 
+Before contributing source code, please read [SOURCE_FILES.md](./SOURCE_FILES.md) first to understand file responsibilities and entry points.
+
 ### Contributors
 
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
