@@ -8,6 +8,9 @@
 <div align="center">
   <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
   <h1>DOM AI Bridge</h1>
+
+  <h2><a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd">Click & Install!</a></h2>
+  
   <p>A Chrome extension that lets you click DOM elements on any webpage and export them directly as AI prompts.</p>
   <p>Reads the real DOM directly — no virtual DOM dependency. Works on <b>any web environment</b>.</p>
   <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">Official site</a> (in development)</p>
@@ -150,8 +153,8 @@ UI Annotations — https://example.com
 
 ## Installation
 
-### Chrome Web Store (coming soon)
-> Link will be updated once the review is complete.
+### Chrome Web Store (V.1.0.1)
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.1 </a>
 
 ### Load as unpacked extension (developer mode)
 
