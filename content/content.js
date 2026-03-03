@@ -22,7 +22,9 @@
     dragStartX: 0,
     dragStartY: 0,
     didDrag: false,
-    skipNextClick: false
+    skipNextClick: false,
+    lastHoveredIframe: null,
+    lastHoveredIframeAt: 0
   };
 
   const MAX_UNDO = 50;
@@ -31,6 +33,15 @@
   const HIGHLIGHT_COLOR_STORAGE_KEY = 'agt_highlight_colors';
   const MARKER_VISIBILITY_STORAGE_KEY = 'agt_marker_visibility';
   const I18N_LOCALE_STORAGE_KEY = 'agt_locale';
+  const FRAME_BRIDGE_FLAG = '__agtFrameBridge__';
+  const FRAME_SYNC_TYPE = 'AGT_FRAME_SYNC';
+  const FRAME_HELLO_TYPE = 'AGT_FRAME_HELLO';
+  const FRAME_CMD_TYPE = 'AGT_FRAME_CMD';
+  const FRAME_KEY_ATTR = 'data-agt-frame-key';
+  const IS_TOP_FRAME = window.top === window;
+  const frameWindowByKey = new Map(); // frameKey -> WindowProxy
+  const frameKeyByWindow = new Map(); // WindowProxy -> frameKey
+  const childFrameSelectionMap = new Map(); // frameKey -> { frameInfo, selections }
 
   // ──────────────────────────────────────────
   // 스냅샷 (깊은 복사)
@@ -45,11 +56,321 @@
     State.redoStack = [];
   }
 
+  function postFrameBridgeMessage(targetWindow, type, payload) {
+    if (!targetWindow || typeof targetWindow.postMessage !== 'function') return;
+    targetWindow.postMessage({
+      [FRAME_BRIDGE_FLAG]: true,
+      type,
+      payload: payload || null
+    }, '*');
+  }
+
+  function postFrameSyncToTop() {
+    if (IS_TOP_FRAME) return;
+    postFrameBridgeMessage(window.top, FRAME_SYNC_TYPE, {
+      frameUrl: location.href,
+      frameTitle: document.title || '',
+      selections: snapshot(State.selections)
+    });
+  }
+
+  function postFrameHelloToTop() {
+    if (IS_TOP_FRAME) return;
+    postFrameBridgeMessage(window.top, FRAME_HELLO_TYPE, {
+      frameUrl: location.href,
+      frameTitle: document.title || ''
+    });
+  }
+
+  function getFrameElementByWindow(frameWindow) {
+    const frames = document.querySelectorAll('iframe,frame');
+    for (const frameEl of frames) {
+      try {
+        if (frameEl.contentWindow === frameWindow) return frameEl;
+      } catch (_err) {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  function getFrameElementByKey(frameKey) {
+    if (!frameKey) return null;
+    return document.querySelector(`[${FRAME_KEY_ATTR}="${frameKey}"]`);
+  }
+
+  function ensureFrameKey(frameEl) {
+    if (!(frameEl instanceof Element)) return '';
+    let frameKey = frameEl.getAttribute(FRAME_KEY_ATTR) || '';
+    if (frameKey) return frameKey;
+    frameKey = `fr_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    frameEl.setAttribute(FRAME_KEY_ATTR, frameKey);
+    return frameKey;
+  }
+
+  function buildFrameInfo(frameKey, frameEl, payload) {
+    const selectorInfo = window.__AGT.generateSelector(frameEl);
+    const rect = frameEl.getBoundingClientRect();
+    const frameLabel = frameEl.getAttribute('title')
+      || frameEl.getAttribute('name')
+      || frameEl.id
+      || frameEl.className
+      || frameEl.tagName.toLowerCase();
+
+    return {
+      frameKey,
+      selector: selectorInfo && selectorInfo.selector ? selectorInfo.selector : 'iframe',
+      strategy: selectorInfo && selectorInfo.strategy ? selectorInfo.strategy : 'frame',
+      tagName: frameEl.tagName || 'IFRAME',
+      label: String(frameLabel || 'iframe').trim(),
+      frameUrl: payload && typeof payload.frameUrl === 'string' ? payload.frameUrl : '',
+      frameTitle: payload && typeof payload.frameTitle === 'string' ? payload.frameTitle : '',
+      boundingBox: {
+        x: Math.round(rect.left + window.scrollX),
+        y: Math.round(rect.top + window.scrollY),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      }
+    };
+  }
+
+  function buildChildAggregateId(frameKey, rawSelectionId) {
+    return `frame::${frameKey}::${rawSelectionId}`;
+  }
+
+  function buildFrameRootId(frameKey) {
+    return `frame-root::${frameKey}`;
+  }
+
+  function parseAggregateSelectionId(id) {
+    const raw = typeof id === 'string' ? id : '';
+    if (!raw) return { kind: 'local', id: '' };
+    if (raw.startsWith('frame-root::')) {
+      return { kind: 'frame-root', frameKey: raw.slice('frame-root::'.length) };
+    }
+    if (raw.startsWith('frame::')) {
+      const firstSep = raw.indexOf('::', 'frame::'.length);
+      if (firstSep > 0) {
+        return {
+          kind: 'frame-item',
+          frameKey: raw.slice('frame::'.length, firstSep),
+          selectionId: raw.slice(firstSep + 2)
+        };
+      }
+    }
+    return { kind: 'local', id: raw };
+  }
+
+  function augmentChildSelection(frameInfo, selection, index) {
+    const safeSelection = selection && typeof selection === 'object' ? selection : {};
+    const rawId = typeof safeSelection.id === 'string' ? safeSelection.id : `${Date.now()}_${index}`;
+    const selectorInFrame = typeof safeSelection.selector === 'string' ? safeSelection.selector : '';
+    const composedSelector = frameInfo.selector
+      ? `${frameInfo.selector} >>> ${selectorInFrame}`
+      : selectorInFrame;
+
+    return Object.assign({}, safeSelection, {
+      id: buildChildAggregateId(frameInfo.frameKey, rawId),
+      rawSelectionId: rawId,
+      frameKey: frameInfo.frameKey,
+      frameUrl: frameInfo.frameUrl,
+      frameTitle: frameInfo.frameTitle,
+      frameSelector: frameInfo.selector,
+      frameLabel: frameInfo.label,
+      selectorInFrame,
+      selector: composedSelector,
+      isFrameChild: true
+    });
+  }
+
+  function buildFrameRootSelection(frameInfo, childCount) {
+    return {
+      id: buildFrameRootId(frameInfo.frameKey),
+      tagName: frameInfo.tagName || 'IFRAME',
+      selector: frameInfo.selector || 'iframe',
+      strategy: frameInfo.strategy || 'frame',
+      innerText: frameInfo.frameTitle || frameInfo.label || '',
+      annotation: '',
+      boundingBox: frameInfo.boundingBox,
+      frameKey: frameInfo.frameKey,
+      frameUrl: frameInfo.frameUrl || '',
+      frameTitle: frameInfo.frameTitle || '',
+      frameLabel: frameInfo.label || '',
+      childCount: childCount || 0,
+      isFrameRoot: true,
+      syntheticFrameRoot: true
+    };
+  }
+
+  function pruneDetachedFrameSelections() {
+    if (!IS_TOP_FRAME) return;
+    Array.from(childFrameSelectionMap.keys()).forEach((frameKey) => {
+      const frameEl = getFrameElementByKey(frameKey);
+      if (frameEl) return;
+      childFrameSelectionMap.delete(frameKey);
+      const frameWindow = frameWindowByKey.get(frameKey);
+      if (frameWindow) frameKeyByWindow.delete(frameWindow);
+      frameWindowByKey.delete(frameKey);
+    });
+  }
+
+  function getDisplaySelections() {
+    if (!IS_TOP_FRAME) return State.selections;
+
+    pruneDetachedFrameSelections();
+
+    const list = [];
+    const frameRootIndexByKey = new Map();
+    State.selections.forEach((sel) => {
+      const tagName = String(sel && sel.tagName || '').toUpperCase();
+      const isFrameRoot = !!(sel && sel.frameKey && (tagName === 'IFRAME' || tagName === 'FRAME'));
+      const copy = Object.assign({}, sel, {
+        isFrameRoot,
+        isFrameChild: false
+      });
+      const index = list.push(copy) - 1;
+      if (isFrameRoot) {
+        frameRootIndexByKey.set(copy.frameKey, index);
+      }
+    });
+
+    const pendingInsertions = [];
+
+    childFrameSelectionMap.forEach((entry) => {
+      const frameInfo = entry && entry.frameInfo ? entry.frameInfo : null;
+      const childSelections = entry && Array.isArray(entry.selections) ? entry.selections : [];
+      if (!frameInfo || childSelections.length === 0) return;
+
+      if (frameRootIndexByKey.has(frameInfo.frameKey)) {
+        const rootIndex = frameRootIndexByKey.get(frameInfo.frameKey);
+        const rootSel = list[rootIndex];
+        if (rootSel) {
+          rootSel.childCount = childSelections.length;
+          rootSel.frameUrl = frameInfo.frameUrl || rootSel.frameUrl || '';
+          rootSel.frameTitle = frameInfo.frameTitle || rootSel.frameTitle || '';
+          rootSel.frameLabel = frameInfo.label || rootSel.frameLabel || '';
+          rootSel.syntheticFrameRoot = false;
+        }
+        pendingInsertions.push({
+          index: rootIndex + 1,
+          items: childSelections
+        });
+        return;
+      }
+
+      pendingInsertions.push({
+        index: list.length,
+        items: [buildFrameRootSelection(frameInfo, childSelections.length)].concat(childSelections)
+      });
+    });
+
+    pendingInsertions.sort((a, b) => a.index - b.index);
+    let offset = 0;
+    pendingInsertions.forEach((insertion) => {
+      if (!insertion || !Array.isArray(insertion.items) || insertion.items.length === 0) return;
+      const at = Math.max(0, Math.min(list.length, insertion.index + offset));
+      list.splice(at, 0, ...insertion.items);
+      offset += insertion.items.length;
+    });
+
+    return list;
+  }
+
+  function getSelectionCount() {
+    if (!IS_TOP_FRAME) return State.selections.length;
+    let childCount = 0;
+    childFrameSelectionMap.forEach((entry) => {
+      const childSelections = entry && Array.isArray(entry.selections) ? entry.selections : [];
+      childCount += childSelections.length;
+    });
+    return State.selections.length + childCount;
+  }
+
+  function getSelectionsForExport() {
+    if (!IS_TOP_FRAME) return State.selections;
+    const merged = snapshot(State.selections);
+    childFrameSelectionMap.forEach((entry) => {
+      const frameInfo = entry && entry.frameInfo ? entry.frameInfo : null;
+      const childSelections = entry && Array.isArray(entry.selections) ? entry.selections : [];
+      childSelections.forEach((sel) => {
+        merged.push(Object.assign({}, sel, {
+          id: sel.rawSelectionId || sel.id,
+          selector: sel.selectorInFrame || sel.selector,
+          frameContext: frameInfo ? {
+            frameSelector: frameInfo.selector,
+            frameUrl: frameInfo.frameUrl,
+            frameTitle: frameInfo.frameTitle,
+            frameLabel: frameInfo.label,
+            composedSelector: sel.selector
+          } : null
+        }));
+      });
+    });
+    return merged;
+  }
+
+  function broadcastCommandToChildFrames(commandPayload) {
+    if (!IS_TOP_FRAME) return;
+    const frames = document.querySelectorAll('iframe,frame');
+    frames.forEach((frameEl) => {
+      try {
+        if (!frameEl.contentWindow) return;
+        postFrameBridgeMessage(frameEl.contentWindow, FRAME_CMD_TYPE, commandPayload);
+      } catch (_err) {
+        // ignore
+      }
+    });
+  }
+
+  function sendCommandToFrameKey(frameKey, commandPayload) {
+    const targetWindow = frameWindowByKey.get(frameKey);
+    if (!targetWindow) return false;
+    postFrameBridgeMessage(targetWindow, FRAME_CMD_TYPE, commandPayload);
+    return true;
+  }
+
+  function removeChildSelectionInMap(frameKey, rawSelectionId) {
+    const entry = childFrameSelectionMap.get(frameKey);
+    if (!entry || !Array.isArray(entry.selections)) return false;
+    const nextSelections = entry.selections.filter((sel) => sel.rawSelectionId !== rawSelectionId);
+    childFrameSelectionMap.set(frameKey, {
+      frameInfo: entry.frameInfo,
+      selections: nextSelections
+    });
+    return nextSelections.length > 0;
+  }
+
+  function clearChildFrameInMap(frameKey) {
+    childFrameSelectionMap.delete(frameKey);
+  }
+
+  function clearAllChildFramesInMap() {
+    childFrameSelectionMap.clear();
+  }
+
+  function editChildSelectionAnnotationInMap(frameKey, rawSelectionId, annotation) {
+    const entry = childFrameSelectionMap.get(frameKey);
+    if (!entry || !Array.isArray(entry.selections)) return false;
+    let updated = false;
+    const nextSelections = entry.selections.map((sel) => {
+      if (sel.rawSelectionId !== rawSelectionId) return sel;
+      updated = true;
+      return Object.assign({}, sel, { annotation });
+    });
+    if (!updated) return false;
+    childFrameSelectionMap.set(frameKey, {
+      frameInfo: entry.frameInfo,
+      selections: nextSelections
+    });
+    return true;
+  }
+
   // ──────────────────────────────────────────
   // 활성화 / 비활성화
   // ──────────────────────────────────────────
-  function activate() {
+  function activate(options) {
     if (State.isActive) return;
+    const fromParent = !!(options && options.fromParent);
     State.isActive = true;
     window.__AGT.initOverlay();
     document.addEventListener('mouseover', onMouseOver, true);
@@ -59,12 +380,17 @@
     document.addEventListener('mouseup', onMouseUp, true);
     document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown, true);
-    notifyBackground();
+    window.addEventListener('blur', onWindowBlur, true);
+    if (IS_TOP_FRAME && !fromParent) {
+      broadcastCommandToChildFrames({ cmd: 'SET_ACTIVE', active: true });
+      notifyBackground();
+    }
     broadcastState();
   }
 
-  function deactivate() {
+  function deactivate(options) {
     if (!State.isActive) return;
+    const fromParent = !!(options && options.fromParent);
     State.isActive = false;
     document.removeEventListener('mouseover', onMouseOver, true);
     document.removeEventListener('mouseout', onMouseOut, true);
@@ -73,10 +399,14 @@
     document.removeEventListener('mouseup', onMouseUp, true);
     document.removeEventListener('click', onClick, true);
     document.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('blur', onWindowBlur, true);
     resetPointerTracking();
     window.__AGT.clearHover();
     window.__AGT.clearSearchHighlights();
-    notifyBackground();
+    if (IS_TOP_FRAME && !fromParent) {
+      broadcastCommandToChildFrames({ cmd: 'SET_ACTIVE', active: false });
+      notifyBackground();
+    }
     broadcastState();
   }
 
@@ -94,6 +424,11 @@
 
     e.preventDefault();
     e.stopPropagation();
+
+    if (!IS_TOP_FRAME) {
+      postFrameBridgeMessage(window.top, FRAME_CMD_TYPE, { cmd: 'TOGGLE_ACTIVE' });
+      return;
+    }
 
     if (State.isActive) deactivate();
     else activate();
@@ -120,6 +455,10 @@
     if (window.__AGT.isOwnElement(el)) return;
 
     State.hoveredEl = el;
+    if (el instanceof HTMLIFrameElement) {
+      State.lastHoveredIframe = el;
+      State.lastHoveredIframeAt = Date.now();
+    }
     const sel = window.__AGT.generateSelector(el);
     window.__AGT.showHover(el, {
       selector: sel.selector,
@@ -179,43 +518,7 @@
 
     e.preventDefault();
     e.stopPropagation();
-
-    // 이미 팝오버가 열려있으면 닫기만
-    if (document.getElementById('__agentation-popover__')) {
-      window.__AGT.hideAnnotationPopover();
-      return;
-    }
-
-    const data = window.__AGT.collectElementData(el);
-    if (!data) return;
-
-    // 호버 하이라이트를 임시 선택 색으로 전환 (팝오버 열린 동안)
-    window.__AGT.clearHover();
-    window.__AGT.addSelectedHighlight(el, '__pending__');
-
-    window.__AGT.showAnnotationPopover(
-      el,
-      {
-        tagName: data.tagName,
-        selector: data.selector,
-        innerText: data.innerText
-      },
-      // Add 클릭
-      function (annotationText) {
-        window.__AGT.removeSelectedHighlight('__pending__');
-        data.annotation = annotationText;
-        pushUndo();
-        State.selections.push(data);
-        window.__AGT.addSelectedHighlight(el, data.id, State.selections.length);
-        syncHighlightOrderNumbers();
-        saveToStorage();
-        broadcastState();
-      },
-      // Cancel 클릭
-      function () {
-        window.__AGT.removeSelectedHighlight('__pending__');
-      }
-    );
+    startSelectionFlow(el, { closeIfOpen: true });
   }
 
   function shouldIgnoreClickSelection(el) {
@@ -246,6 +549,190 @@
     const widthRatio = rect.width / Math.max(window.innerWidth, 1);
     const heightRatio = rect.height / Math.max(window.innerHeight, 1);
     return widthRatio >= 0.9 && heightRatio >= 0.75;
+  }
+
+  function onWindowBlur() {
+    if (!State.isActive) return;
+    const activeEl = document.activeElement;
+    if (!(activeEl instanceof HTMLIFrameElement)) return;
+
+    const justHoveredSameIframe = (
+      State.lastHoveredIframe === activeEl &&
+      Date.now() - State.lastHoveredIframeAt <= 1000
+    );
+    if (!justHoveredSameIframe) return;
+
+    startSelectionFlow(activeEl, { closeIfOpen: false });
+  }
+
+  function startSelectionFlow(el, options) {
+    if (!(el instanceof Element)) return;
+    const closeIfOpen = !options || options.closeIfOpen !== false;
+
+    // 이미 팝오버가 열려있으면 닫기만
+    if (document.getElementById('__agentation-popover__')) {
+      if (closeIfOpen) window.__AGT.hideAnnotationPopover();
+      return;
+    }
+
+    const data = window.__AGT.collectElementData(el);
+    if (!data) return;
+    const tagName = String(el.tagName || '').toUpperCase();
+    if (IS_TOP_FRAME && (tagName === 'IFRAME' || tagName === 'FRAME')) {
+      const frameKey = ensureFrameKey(el);
+      if (frameKey) {
+        data.frameKey = frameKey;
+        data.isFrameRoot = true;
+      }
+    }
+
+    // 호버 하이라이트를 임시 선택 색으로 전환 (팝오버 열린 동안)
+    window.__AGT.clearHover();
+    window.__AGT.addSelectedHighlight(el, '__pending__');
+
+    window.__AGT.showAnnotationPopover(
+      el,
+      {
+        tagName: data.tagName,
+        selector: data.selector,
+        innerText: data.innerText
+      },
+      // Add 클릭
+      function (annotationText) {
+        window.__AGT.removeSelectedHighlight('__pending__');
+        data.annotation = annotationText;
+        pushUndo();
+        State.selections.push(data);
+        window.__AGT.addSelectedHighlight(el, data.id, State.selections.length);
+        syncHighlightOrderNumbers();
+        saveToStorage();
+        broadcastState();
+      },
+      // Cancel 클릭
+      function () {
+        window.__AGT.removeSelectedHighlight('__pending__');
+      }
+    );
+  }
+
+  function handleFrameSyncMessage(sourceWindow, payload) {
+    if (!IS_TOP_FRAME) return;
+    const frameEl = getFrameElementByWindow(sourceWindow);
+    if (!(frameEl instanceof Element)) return;
+
+    const frameKey = ensureFrameKey(frameEl);
+    if (!frameKey) return;
+
+    frameWindowByKey.set(frameKey, sourceWindow);
+    frameKeyByWindow.set(sourceWindow, frameKey);
+
+    const frameInfo = buildFrameInfo(frameKey, frameEl, payload || {});
+    const rawSelections = Array.isArray(payload && payload.selections) ? payload.selections : [];
+    const childSelections = rawSelections.map((sel, index) => augmentChildSelection(frameInfo, sel, index));
+
+    if (childSelections.length === 0) {
+      childFrameSelectionMap.delete(frameKey);
+      broadcastState();
+      return;
+    }
+
+    childFrameSelectionMap.set(frameKey, {
+      frameInfo,
+      selections: childSelections
+    });
+    broadcastState();
+  }
+
+  function handleFrameHelloMessage(sourceWindow, payload) {
+    if (!IS_TOP_FRAME) return;
+    const frameEl = getFrameElementByWindow(sourceWindow);
+    if (!(frameEl instanceof Element)) return;
+
+    const frameKey = ensureFrameKey(frameEl);
+    if (!frameKey) return;
+    frameWindowByKey.set(frameKey, sourceWindow);
+    frameKeyByWindow.set(sourceWindow, frameKey);
+
+    const frameInfo = buildFrameInfo(frameKey, frameEl, payload || {});
+    sendCommandToFrameKey(frameKey, { cmd: 'SET_ACTIVE', active: State.isActive });
+    sendCommandToFrameKey(frameKey, { cmd: 'SET_HIGHLIGHT_COLORS', colors: getHighlightColors() });
+    sendCommandToFrameKey(frameKey, { cmd: 'SET_MARKER_VISIBILITY', visible: getMarkerVisibility() });
+
+    if (!childFrameSelectionMap.has(frameKey)) {
+      childFrameSelectionMap.set(frameKey, {
+        frameInfo,
+        selections: []
+      });
+    }
+  }
+
+  function onFrameBridgeMessage(event) {
+    if (!event || event.source === window) return;
+    const data = event.data;
+    if (!data || data[FRAME_BRIDGE_FLAG] !== true) return;
+
+    if (data.type === FRAME_SYNC_TYPE) {
+      handleFrameSyncMessage(event.source, data.payload || {});
+      return;
+    }
+
+    if (data.type === FRAME_HELLO_TYPE) {
+      handleFrameHelloMessage(event.source, data.payload || {});
+      return;
+    }
+
+    if (data.type !== FRAME_CMD_TYPE) return;
+    const command = data.payload || {};
+    const cmd = command.cmd;
+
+    if (IS_TOP_FRAME) {
+      if (cmd === 'TOGGLE_ACTIVE') {
+        if (State.isActive) deactivate();
+        else activate();
+      }
+      return;
+    }
+
+    if (cmd === 'SET_ACTIVE') {
+      if (command.active) activate({ fromParent: true });
+      else deactivate({ fromParent: true });
+      return;
+    }
+
+    if (cmd === 'REMOVE_SELECTION') {
+      if (command.id) removeSelection(command.id);
+      return;
+    }
+
+    if (cmd === 'CLEAR_ALL') {
+      clearAll();
+      return;
+    }
+
+    if (cmd === 'EDIT_ANNOTATION') {
+      if (!command.id) return;
+      const sel = State.selections.find((item) => item.id === command.id);
+      if (!sel) return;
+      pushUndo();
+      sel.annotation = typeof command.annotation === 'string' ? command.annotation : '';
+      saveToStorage();
+      broadcastState();
+      return;
+    }
+
+    if (cmd === 'SET_HIGHLIGHT_COLORS') {
+      applyHighlightColors(command.colors || {});
+      return;
+    }
+
+    if (cmd === 'SET_MARKER_VISIBILITY') {
+      applyMarkerVisibility(command.visible);
+      return;
+    }
+
+    if (cmd === 'I18N_REFRESH') {
+      void syncI18nState();
+    }
   }
 
   function onKeyDown(e) {
@@ -318,9 +805,31 @@
   // 단일 선택 삭제
   // ──────────────────────────────────────────
   function removeSelection(id) {
+    const parsed = parseAggregateSelectionId(id);
+
+    if (parsed.kind === 'frame-root' && IS_TOP_FRAME) {
+      sendCommandToFrameKey(parsed.frameKey, { cmd: 'CLEAR_ALL' });
+      clearChildFrameInMap(parsed.frameKey);
+      broadcastState();
+      return;
+    }
+
+    if (parsed.kind === 'frame-item' && IS_TOP_FRAME) {
+      sendCommandToFrameKey(parsed.frameKey, { cmd: 'REMOVE_SELECTION', id: parsed.selectionId });
+      removeChildSelectionInMap(parsed.frameKey, parsed.selectionId);
+      broadcastState();
+      return;
+    }
+
+    const targetSelection = State.selections.find((item) => item.id === parsed.id);
+    if (IS_TOP_FRAME && targetSelection && targetSelection.frameKey) {
+      sendCommandToFrameKey(targetSelection.frameKey, { cmd: 'CLEAR_ALL' });
+      clearChildFrameInMap(targetSelection.frameKey);
+    }
+
     pushUndo();
-    State.selections = State.selections.filter(s => s.id !== id);
-    window.__AGT.removeSelectedHighlight(id);
+    State.selections = State.selections.filter(s => s.id !== parsed.id);
+    window.__AGT.removeSelectedHighlight(parsed.id);
     syncHighlightOrderNumbers();
     saveToStorage();
     broadcastState();
@@ -333,6 +842,10 @@
     pushUndo();
     State.selections = [];
     window.__AGT.clearAllHighlights();
+    if (IS_TOP_FRAME) {
+      broadcastCommandToChildFrames({ cmd: 'CLEAR_ALL' });
+      clearAllChildFramesInMap();
+    }
     saveToStorage();
     broadcastState();
   }
@@ -416,21 +929,26 @@
   // ──────────────────────────────────────────
   function broadcastState() {
     syncSelectionCounter();
-    chrome.runtime.sendMessage({
-      type: 'STATE_UPDATE',
-      payload: getStateSnapshot()
-    }).catch(() => {});
+    if (IS_TOP_FRAME) {
+      chrome.runtime.sendMessage({
+        type: 'STATE_UPDATE',
+        payload: getStateSnapshot()
+      }).catch(() => {});
+    } else {
+      postFrameSyncToTop();
+    }
   }
 
   function syncSelectionCounter() {
     if (typeof window.__AGT.updateSelectionCounter !== 'function') return;
-    window.__AGT.updateSelectionCounter(State.selections.length, State.isActive);
+    window.__AGT.updateSelectionCounter(getSelectionCount(), State.isActive);
   }
 
   function getStateSnapshot() {
     return {
       isActive: State.isActive,
-      selections: State.selections,
+      selections: getDisplaySelections(),
+      selectionCount: getSelectionCount(),
       canUndo: State.undoStack.length > 0,
       canRedo: State.redoStack.length > 0,
       url: location.href
@@ -484,6 +1002,9 @@
 
     if (type === 'I18N_REFRESH') {
       void syncI18nState().then((state) => {
+        if (IS_TOP_FRAME) {
+          broadcastCommandToChildFrames({ cmd: 'I18N_REFRESH' });
+        }
         sendResponse({ ok: true, locale: state && state.locale });
       });
       return true;
@@ -532,14 +1053,15 @@
       }
       case 'GET_EXPORT': {
         const format = payload && payload.format;
+        const exportSelections = getSelectionsForExport();
         if (format === 'ai') {
-          sendResponse({ data: window.__AGT.exportAI(State.selections) });
+          sendResponse({ data: window.__AGT.exportAI(exportSelections) });
         } else if (format === 'plain') {
-          sendResponse({ data: window.__AGT.exportPlain(State.selections) });
+          sendResponse({ data: window.__AGT.exportPlain(exportSelections) });
         } else if (format === 'markdown') {
-          sendResponse({ data: window.__AGT.exportMarkdown(State.selections) });
+          sendResponse({ data: window.__AGT.exportMarkdown(exportSelections) });
         } else {
-          sendResponse({ data: window.__AGT.exportJSON(State.selections) });
+          sendResponse({ data: window.__AGT.exportJSON(exportSelections) });
         }
         break;
       }
@@ -549,6 +1071,9 @@
       }
       case 'SET_HIGHLIGHT_COLORS': {
         const appliedColors = applyHighlightColors(payload || {}) || getHighlightColors() || payload || null;
+        if (IS_TOP_FRAME) {
+          broadcastCommandToChildFrames({ cmd: 'SET_HIGHLIGHT_COLORS', colors: appliedColors || {} });
+        }
         chrome.storage.local.set({
           [HIGHLIGHT_COLOR_STORAGE_KEY]: appliedColors
         }).catch(() => {});
@@ -563,6 +1088,9 @@
         const requestedVisible = !!(payload && payload.visible);
         const appliedVisible = applyMarkerVisibility(requestedVisible);
         const finalVisible = typeof appliedVisible === 'boolean' ? appliedVisible : requestedVisible;
+        if (IS_TOP_FRAME) {
+          broadcastCommandToChildFrames({ cmd: 'SET_MARKER_VISIBILITY', visible: finalVisible });
+        }
         chrome.storage.local.set({
           [MARKER_VISIBILITY_STORAGE_KEY]: finalVisible
         }).catch(() => {});
@@ -571,7 +1099,25 @@
       }
       case 'EDIT_ANNOTATION': {
         if (payload && payload.id) {
-          const sel = State.selections.find(s => s.id === payload.id);
+          const parsed = parseAggregateSelectionId(payload.id);
+          if (parsed.kind === 'frame-root') {
+            sendResponse(getStateSnapshot());
+            break;
+          }
+          if (parsed.kind === 'frame-item' && IS_TOP_FRAME) {
+            const nextAnnotation = typeof payload.annotation === 'string' ? payload.annotation : '';
+            sendCommandToFrameKey(parsed.frameKey, {
+              cmd: 'EDIT_ANNOTATION',
+              id: parsed.selectionId,
+              annotation: nextAnnotation
+            });
+            editChildSelectionAnnotationInMap(parsed.frameKey, parsed.selectionId, nextAnnotation);
+            broadcastState();
+            sendResponse(getStateSnapshot());
+            break;
+          }
+
+          const sel = State.selections.find(s => s.id === parsed.id);
           if (sel) {
             pushUndo();
             sel.annotation = typeof payload.annotation === 'string' ? payload.annotation : '';
@@ -614,6 +1160,11 @@
     State.undoStack = [];
     State.redoStack = [];
     State.hoveredEl = null;
+    State.lastHoveredIframe = null;
+    State.lastHoveredIframeAt = 0;
+    if (IS_TOP_FRAME) {
+      clearAllChildFramesInMap();
+    }
 
     // 새 URL 기준 저장 상태 로드 (없으면 빈 상태 유지)
     void loadFromStorage().then((hasSaved) => {
@@ -665,10 +1216,14 @@
   // ──────────────────────────────────────────
   // 초기화
   // ──────────────────────────────────────────
+  window.addEventListener('message', onFrameBridgeMessage, true);
   document.addEventListener('keydown', onGlobalKeyDown, true);
   void syncI18nState();
   loadHighlightColorsFromStorage();
   loadMarkerVisibilityFromStorage();
+  if (!IS_TOP_FRAME) {
+    postFrameHelloToTop();
+  }
   void loadFromStorage().then((hasSaved) => {
     if (State.isActive && hasSaved) {
       refreshHighlights();

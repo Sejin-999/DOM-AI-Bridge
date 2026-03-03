@@ -146,9 +146,19 @@
     selections.forEach((sel, i) => {
       const text = sel.innerText ? `"${sel.innerText.slice(0, 100)}"` : null;
       const hasAnnotation = sel.annotation && sel.annotation.trim();
+      const frameContext = sel && sel.frameContext && typeof sel.frameContext === 'object'
+        ? sel.frameContext
+        : null;
+      const selectorText = frameContext && frameContext.composedSelector
+        ? frameContext.composedSelector
+        : sel.selector;
+      const frameLabel = frameContext
+        ? (frameContext.frameTitle || frameContext.frameLabel || frameContext.frameUrl || frameContext.frameSelector || '')
+        : '';
 
       lines.push(`---`);
-      lines.push(`**[${i + 1}] ${sel.tagName}** \`${sel.selector}\``);
+      lines.push(`**[${i + 1}] ${sel.tagName}** \`${selectorText}\``);
+      if (frameContext) lines.push(`Frame: ${frameLabel}`);
       if (text) lines.push(`Text: ${text}`);
       if (hasAnnotation) lines.push(`> ${sel.annotation}`);
       lines.push(``);
@@ -176,9 +186,19 @@
         .filter(([k]) => k !== 'style')
         .map(([k, v]) => `${k}="${v}"`)
         .join(', ');
+      const frameContext = sel && sel.frameContext && typeof sel.frameContext === 'object'
+        ? sel.frameContext
+        : null;
+      const selectorText = frameContext && frameContext.composedSelector
+        ? frameContext.composedSelector
+        : sel.selector;
 
       lines.push(`### ${i + 1}. ${sel.tagName} — "${sel.innerText || '(no text)'}"`);
-      lines.push(`- **Selector**: \`${sel.selector}\``);
+      lines.push(`- **Selector**: \`${selectorText}\``);
+      if (frameContext) {
+        lines.push(`- **Frame**: ${frameContext.frameTitle || frameContext.frameLabel || ''}`);
+        if (frameContext.frameUrl) lines.push(`- **Frame URL**: ${frameContext.frameUrl}`);
+      }
       lines.push(`- **Strategy**: ${sel.strategy}`);
       lines.push(`- **Tag**: \`${sel.tagName}\``);
       if (sel.innerText) lines.push(`- **Text**: ${sel.innerText}`);
@@ -204,7 +224,16 @@
     ];
 
     selections.forEach((sel, i) => {
-      lines.push(`${i + 1}. ${sel.tagName} (${sel.selector})`);
+      const frameContext = sel && sel.frameContext && typeof sel.frameContext === 'object'
+        ? sel.frameContext
+        : null;
+      const selectorText = frameContext && frameContext.composedSelector
+        ? frameContext.composedSelector
+        : sel.selector;
+      lines.push(`${i + 1}. ${sel.tagName} (${selectorText})`);
+      if (frameContext) {
+        lines.push(`   프레임: ${frameContext.frameTitle || frameContext.frameLabel || frameContext.frameUrl || ''}`);
+      }
       if (sel.innerText) lines.push(`   텍스트: "${sel.innerText.slice(0, 80)}"`);
       if (sel.annotation) lines.push(`   주석: ${sel.annotation}`);
       else lines.push(`   주석: (없음)`);
