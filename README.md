@@ -9,7 +9,7 @@
   <img src="./icons/icon128.png" width="72" alt="DOM AI Bridge" />
   <h1>DOM AI Bridge</h1>
 
-  <h2><a href = "https://mail.google.com/mail/u/1/#inbox/FMfcgzQfCDRsCBPbTQDcMJBZWnxDkmhS">클릭하여 설치하세요!</a></h2>
+  <h2><a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd">클릭하여 설치하세요!</a></h2>
   
   <br>
   
@@ -160,7 +160,7 @@ UI 주석 — https://example.com
 ## 설치 방법
 
 ### Chrome Web Store (V.1.0.1)
-> https://mail.google.com/mail/u/1/#inbox/FMfcgzQfCDRsCBPbTQDcMJBZWnxDkmhS
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.1 </a>
 
 ### 개발자 모드로 직접 설치
 
