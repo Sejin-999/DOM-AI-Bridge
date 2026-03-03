@@ -239,6 +239,8 @@ MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 �
 | 언어 번역 | PR — `Lang: 언어명` | 새로운 언어 번역 추가 또는 기존 번역 개선 | 📖 |
 | 아이디어 제안 | Issue — `Idea: 아이디어 설명` | 기능 아이디어 또는 개선 제안 | 🤔 |
 
+소스 코드 기여 전에는 [SOURCE_FILES.md](./SOURCE_FILES.md)를 먼저 확인해 파일 역할과 진입점을 파악해 주세요.
+
 ### Contributors
 
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
