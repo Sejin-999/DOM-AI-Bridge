@@ -25,6 +25,10 @@
         "content/dom-utils.js",
         "content/selector.js",
         "content/overlay.js",
+        "content/content-state.js",
+        "content/content-frame.js",
+        "content/content-handlers.js",
+        "content/content-actions.js",
         "content/content.js"
       ]
     }
