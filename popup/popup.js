@@ -63,6 +63,7 @@
   const HIGHLIGHT_COLOR_STORAGE_KEY = 'agt_highlight_colors';
   const MARKER_VISIBILITY_STORAGE_KEY = 'agt_marker_visibility';
   const WEBHOOK_CONFIG_STORAGE_KEY = 'agt_webhook_config';
+  const INCLUDE_ERRORS_STORAGE_KEY = 'agt_include_errors';
   const WEBHOOK_TARGET_LIMIT = 3;
   const WEBHOOK_MODE_LIST = ['ai', 'json', 'plain'];
 
@@ -1130,6 +1131,30 @@
     }
   }
 
+  // ──────────────────────────────────────────
+  // 콘솔 에러 포함 옵션
+  // ──────────────────────────────────────────
+  const errorToggleBtn = document.getElementById('errorToggleBtn');
+
+  function isErrorIncluded() {
+    return errorToggleBtn.dataset.active === '1';
+  }
+
+  async function initIncludeErrorsPreference() {
+    const saved = await getStorageValue(INCLUDE_ERRORS_STORAGE_KEY);
+    errorToggleBtn.dataset.active = saved === true ? '1' : '0';
+  }
+
+  errorToggleBtn.addEventListener('click', () => {
+    const next = errorToggleBtn.dataset.active !== '1';
+    errorToggleBtn.dataset.active = next ? '1' : '0';
+    chrome.storage.local.set({ [INCLUDE_ERRORS_STORAGE_KEY]: next });
+    showToast(next
+      ? t('popup_toast_errors_enabled', null, 'Error log enabled')
+      : t('popup_toast_errors_disabled', null, 'Error log disabled')
+    );
+  });
+
   async function toggleMarkerVisibility() {
     const currentVisible = markerToggleBtn.dataset.visible !== '0';
     const nextVisible = !currentVisible;
@@ -1500,52 +1525,95 @@
     const currentCount = Number.isFinite(currentState.selectionCount)
       ? currentState.selectionCount
       : currentState.selections.length;
-    if (!currentCount) {
+    const includeErrors = isErrorIncluded();
+
+    // 요소 없음 + 에러 꺼짐 → 그냥 안내
+    if (!currentCount && !includeErrors) {
       showToast(t('popup_toast_no_selection', null, 'No selected elements'));
       return;
     }
 
-    const result = await sendToContent({ type: 'GET_EXPORT', payload: { format } });
-    if (!result || !result.data) {
-      showToast(t('popup_toast_copy_failed', null, 'Copy failed'));
+    let exportData = '';
+    let hasElements = false;
+    let hasErrors = false;
+
+    // 요소가 있는 경우 export
+    if (currentCount) {
+      const result = await sendToContent({ type: 'GET_EXPORT', payload: { format } });
+      if (!result || !result.data) {
+        showToast(t('popup_toast_copy_failed', null, 'Copy failed'));
+        return;
+      }
+      exportData = result.data;
+      hasElements = true;
+    }
+
+    // 에러 포함 켜진 경우 에러 append
+    if (includeErrors) {
+      const errResult = await sendToContent({ type: 'GET_CONSOLE_ERRORS' });
+      const errors = (errResult && Array.isArray(errResult.errors)) ? errResult.errors : [];
+      if (errors.length > 0) {
+        const errorLines = ['\n\n---', `## Console Errors (${errors.length})`];
+        errors.forEach(function (err, i) {
+          errorLines.push(`\n${i + 1}. [${err.type}] ${err.message}`);
+          if (err.source) errorLines.push(`   at ${err.source}`);
+        });
+        exportData += errorLines.join('\n');
+        hasErrors = true;
+      }
+    }
+
+    // 요소 없음 + 에러 켜짐인데 에러도 없는 경우
+    if (!exportData) {
+      showToast(t('popup_toast_no_selection', null, 'No selected elements'));
       return;
     }
 
-    copyToClipboard(result.data);
+    copyToClipboard(exportData);
+
+    // 토스트 메시지 결정
+    let copiedMsg;
+    if (hasElements && hasErrors) {
+      copiedMsg = t('popup_toast_copied_with_errors', null, 'Elements + errors copied');
+    } else if (!hasElements && hasErrors) {
+      copiedMsg = t('popup_toast_copied_errors_only', null, 'Error log copied');
+    } else {
+      copiedMsg = t('popup_toast_copied', null, 'Copied');
+    }
 
     const webhookStatus = await sendWebhookIfNeeded(format);
-    const copiedMsg = t('popup_toast_copied', null, 'Copied');
+    const finalCopiedMsg = copiedMsg;
 
     if (webhookStatus === 'sent') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_sent', null, 'Webhook sent')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_sent', null, 'Webhook sent')}`);
       return;
     }
     if (webhookStatus === 'partial') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_partial', null, 'Webhook partially sent')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_partial', null, 'Webhook partially sent')}`);
       return;
     }
     if (webhookStatus === 'invalid_url') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_invalid_url', null, 'Invalid webhook URL')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_invalid_url', null, 'Invalid webhook URL')}`);
       return;
     }
     if (webhookStatus === 'invalid_mode') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_invalid_mode', null, 'Select at least one webhook mode')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_invalid_mode', null, 'Select at least one webhook mode')}`);
       return;
     }
     if (webhookStatus === 'invalid_headers') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_invalid_headers', null, 'Invalid webhook headers format')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_invalid_headers', null, 'Invalid webhook headers format')}`);
       return;
     }
     if (webhookStatus === 'export_failed') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_export_failed', null, 'Webhook payload build failed')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_export_failed', null, 'Webhook payload build failed')}`);
       return;
     }
     if (webhookStatus === 'request_failed') {
-      showToast(`${copiedMsg} · ${t('popup_toast_webhook_failed', null, 'Webhook request failed')}`);
+      showToast(`${finalCopiedMsg} · ${t('popup_toast_webhook_failed', null, 'Webhook request failed')}`);
       return;
     }
 
-    showToast(copiedMsg);
+    showToast(finalCopiedMsg);
   }
 
   // ──────────────────────────────────────────
@@ -1612,6 +1680,7 @@
   async function bootstrap() {
     await initI18n();
     await initWebhookConfigPreference();
+    await initIncludeErrorsPreference();
     initShortcutPreference();
     setHighlightColorInputs(DEFAULT_HIGHLIGHT_COLORS);
     setMarkerToggleButton(true);

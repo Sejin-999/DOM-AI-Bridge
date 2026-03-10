@@ -63,12 +63,13 @@
     /* 토글 버튼 */
     .toggle-btn {
       display: flex; align-items: center; gap: 6px;
-      width: 120px;
+      min-width: 120px;
       justify-content: center;
       padding: 6px 12px;
       border: none; border-radius: var(--radius);
       font-size: 12px; font-weight: 600; cursor: pointer;
       transition: all 0.15s;
+      white-space: nowrap;
     }
     .toggle-btn.inactive {
       background: var(--blue); color: #fff;
@@ -83,11 +84,6 @@
       background: rgba(255,255,255,0.6);
     }
     #toggleLabel {
-      display: inline-block;
-      max-width: calc(100% - 16px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       line-height: 1.1;
       transition: font-size 0.15s;
     }
@@ -332,7 +328,7 @@
       border-top: 1px solid var(--border);
     }
     .footer-export {
-      display: flex; flex-direction: column; gap: 6px;
+      display: flex; flex-direction: column; gap: 7px;
       padding: 10px 12px 8px;
     }
     .format-row {
@@ -360,23 +356,24 @@
       background: rgba(59, 130, 246, 0.28);
     }
     .format-selector {
-      display: flex; flex: 1;
+      display: flex;
       background: var(--bg3);
       border-radius: 5px;
       padding: 2px; gap: 2px;
     }
     .format-btn {
-      flex: 1; padding: 5px 0;
+      padding: 5px 11px;
       border-radius: 4px; border: none;
       background: transparent; color: var(--text3);
       cursor: pointer; font-size: 11px; font-weight: 500;
-      transition: all 0.1s;
+      transition: all 0.1s; white-space: nowrap;
     }
     .format-btn.active {
       background: var(--bg2); color: var(--text); font-weight: 600;
     }
     .format-btn:hover:not(.active) { color: var(--text2); }
     .copy-main-btn {
+      margin-left: auto;
       padding: 6px 14px;
       background: var(--blue); border: none;
       border-radius: 5px; color: #fff;
@@ -402,6 +399,31 @@
     .marker-toggle-btn[data-visible="0"] {
       border-color: var(--amber);
       color: var(--amber);
+    }
+    .issue-link-btn--sm {
+      width: 20px; height: 20px;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── 에러 토글 버튼 ── */
+    .error-toggle-btn {
+      padding: 5px 9px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text3);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .error-toggle-btn[data-active="1"] {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
     }
     .footer-status {
       display: flex; align-items: center; justify-content: space-between;
@@ -1052,8 +1074,15 @@
   <div class="footer">
     <div class="footer-export">
       <div class="format-row">
+        <button class="error-toggle-btn" id="errorToggleBtn" data-active="0" data-i18n="popup_include_errors">에러 포함</button>
+        <div class="format-selector" id="formatSelector">
+          <button class="format-btn active" data-format="ai" data-i18n="popup_format_ai">AI</button>
+          <button class="format-btn" data-format="json" data-i18n="popup_format_json">Developer</button>
+          <button class="format-btn" data-format="plain" data-i18n="popup_format_plain">Share</button>
+        </div>
+        <button class="copy-main-btn" id="copyBtn" data-i18n="popup_footer_copy">Copy</button>
         <a
-          class="issue-link-btn"
+          class="issue-link-btn issue-link-btn--sm"
           id="issueLinkBtn"
           href="https://github.com/Sejin-999/agentation-chrome-extentions/issues/4"
           target="_blank"
@@ -1061,12 +1090,6 @@
           title="Open issue #4"
           aria-label="Open issue #4"
         >?</a>
-        <div class="format-selector" id="formatSelector">
-          <button class="format-btn active" data-format="ai" data-i18n="popup_format_ai">AI</button>
-          <button class="format-btn" data-format="json" data-i18n="popup_format_json">Developer</button>
-          <button class="format-btn" data-format="plain" data-i18n="popup_format_plain">Share</button>
-        </div>
-        <button class="copy-main-btn" id="copyBtn" data-i18n="popup_footer_copy">Copy</button>
       </div>
     </div>
     <div class="footer-status">

@@ -1,0 +1,111 @@
+/**
+ * console-capture.js — 콘솔 에러 수집 (MAIN world, document_start)
+ * console.error / console.warn 오버라이드 + uncaught error / unhandled rejection + WebSocket 에러 감지.
+ *
+ * 타이밍 문제 해결:
+ *   - ISOLATED world content script(document_idle)보다 먼저 실행되므로
+ *     초기 에러는 postMessage가 유실될 수 있음.
+ *   - _buffer에 에러를 보관하고, ISOLATED world가 로드된 후
+ *     __AGT_REQUEST_ERRORS__ 메시지를 보내면 버퍼를 전달한다.
+ */
+(function () {
+  'use strict';
+
+  var MAX_ERRORS = 100;
+  var _buffer = [];   // 전체 버퍼 (ISOLATED world 요청 시 전달)
+  var _seen = {};     // MAIN world 중복 제거
+
+  function dedupKey(type, message) {
+    return type + '::' + String(message).slice(0, 300);
+  }
+
+  function emit(type, message, source) {
+    if (_buffer.length >= MAX_ERRORS) return;
+    var key = dedupKey(type, message);
+    if (_seen[key]) return;
+    _seen[key] = true;
+
+    var entry = {
+      type: type,
+      message: String(message).slice(0, 500),
+      source: source || '',
+      ts: Date.now()
+    };
+    _buffer.push(entry);
+
+    // 실시간 전달 (ISOLATED world 리스너가 이미 있는 경우)
+    try {
+      window.postMessage({ __AGT_CONSOLE_CAPTURE__: true, entry: entry }, '*');
+    } catch (_err) {}
+  }
+
+  function argsToMessage(args) {
+    var parts = [];
+    for (var i = 0; i < args.length; i++) {
+      var a = args[i];
+      if (a instanceof Error) {
+        parts.push(a.message);
+      } else if (a !== null && typeof a === 'object') {
+        try { parts.push(JSON.stringify(a)); } catch (_) { parts.push(String(a)); }
+      } else {
+        parts.push(String(a));
+      }
+    }
+    return parts.join(' ');
+  }
+
+  // console.error 오버라이드
+  var _origError = console.error;
+  console.error = function () {
+    emit('error', argsToMessage(Array.prototype.slice.call(arguments)), '');
+    return _origError.apply(console, arguments);
+  };
+
+  // console.warn 오버라이드
+  var _origWarn = console.warn;
+  console.warn = function () {
+    emit('warn', argsToMessage(Array.prototype.slice.call(arguments)), '');
+    return _origWarn.apply(console, arguments);
+  };
+
+  // 처리되지 않은 JS 오류
+  window.addEventListener('error', function (e) {
+    var msg = (e && e.message) ? e.message : String(e);
+    var src = (e && e.filename) ? (e.filename + ':' + (e.lineno || 0) + ':' + (e.colno || 0)) : '';
+    emit('uncaught', msg, src);
+  }, true);
+
+  // 처리되지 않은 Promise rejection
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e && e.reason;
+    var msg = (reason instanceof Error) ? reason.message : String(reason);
+    emit('rejection', msg, '');
+  }, true);
+
+  // WebSocket 에러 감지 (네트워크 레벨 에러 포함)
+  if (typeof WebSocket !== 'undefined') {
+    var _OrigWS = WebSocket;
+    window.WebSocket = function (url, protocols) {
+      var ws = protocols !== undefined
+        ? new _OrigWS(url, protocols)
+        : new _OrigWS(url);
+      ws.addEventListener('error', function () {
+        emit('websocket', 'WebSocket connection failed: ' + String(url), '');
+      });
+      return ws;
+    };
+    window.WebSocket.prototype = _OrigWS.prototype;
+    window.WebSocket.CONNECTING = _OrigWS.CONNECTING;
+    window.WebSocket.OPEN = _OrigWS.OPEN;
+    window.WebSocket.CLOSING = _OrigWS.CLOSING;
+    window.WebSocket.CLOSED = _OrigWS.CLOSED;
+  }
+
+  // ISOLATED world 요청 시 버퍼 전달
+  window.addEventListener('message', function (e) {
+    if (!e.data || e.data.__AGT_REQUEST_ERRORS__ !== true) return;
+    try {
+      window.postMessage({ __AGT_CONSOLE_BUFFER__: true, errors: _buffer.slice() }, '*');
+    } catch (_err) {}
+  });
+})();

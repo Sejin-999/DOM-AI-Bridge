@@ -127,12 +127,14 @@ UI 주석 — https://example.com
 ## 주요 기능
 
 ### DOM 선택 & 주석
+
 - 클릭으로 요소 선택, 순번 배지 자동 표시
 - 주석 입력 팝오버 (Enter로 빠르게 추가)
 - Undo / Redo 지원 (최대 50단계)
 - CSS 셀렉터 자동 생성 (ID → 시맨틱 속성 → 클래스 → 경로 순)
 
 ### 검색
+
 - CSS 셀렉터로 페이지 내 요소 검색 및 하이라이트
 
 ### 설정
@@ -160,6 +162,7 @@ UI 주석 — https://example.com
 ## 설치 방법
 
 ### Chrome Web Store (V.1.0.1)
+>
 > <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.1 </a>
 
 ### 개발자 모드로 직접 설치
@@ -211,6 +214,60 @@ DOM AI Bridge는 두 가지 플로우를 지원합니다.
 ### 개발 예정: MCP 서버
 
 MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 깊은 자동화를 지원할 예정입니다.
+
+---
+
+## 버전 히스토리
+
+### v1.0.3
+**추가된 기능**
+- 콘솔 에러 로그 수집 및 내보내기 지원 (에러 포함 토글)
+- WebSocket 에러 감지 추가
+- 페이지 초기 로드 시 유실되던 에러 버퍼링으로 복구
+- 선택 요소 없이 에러만 있어도 복사 가능
+
+**버그 픽스**
+- 제한된 페이지(chrome://)에서 토글 버튼 텍스트 잘림 현상 수정
+
+---
+
+### v1.0.2
+**추가된 기능**
+- iframe 내 요소 선택 및 프레임 컨텍스트 내보내기 지원
+- 검색 하이라이트 스크롤 위치 동기화
+- 콘텐츠 스크립트 모듈 분리 (overlay, content 각 역할별 파일 분리)
+
+**버그 픽스**
+- 검색 시 박싱이 스크롤을 따라가지 않는 문제 수정
+- iframe 내부 요소가 선택되지 않던 문제 수정
+
+---
+
+### v1.0.1
+**추가된 기능**
+- Webhook 다중 타겟 관리 및 상세 옵션 지원
+- 내보내기 포맷 명칭 변경 (AI용 / 개발자 / 공유용)
+- 일본어(ja) 로케일 추가, 다국어(i18n) 기반 도입
+- 마커 표시/숨김 토글 기능
+- SPA 라우트 변경 감지 (pushState 패치 + MutationObserver)
+
+**버그 픽스**
+- 라우트 변경 시 이전 하이라이트 잔류 문제 수정
+- 기본 로케일 영어로 통일 및 폴백 순서 정리
+
+---
+
+### v1.0.0
+**추가된 기능**
+- DOM 요소 클릭 선택 및 순번 배지 표시
+- CSS 셀렉터 자동 생성 (ID > attribute > class > nth-child)
+- 주석 팝오버 (Enter=저장, Shift+Enter=줄바꿈, Esc=취소)
+- Undo / Redo (최대 50단계)
+- 내보내기: AI용 Markdown / 개발자용 Markdown / Plain Text / JSON
+- Hover / Selected / Search 하이라이트
+- 드래그 가능한 카운터 툴바
+- 드래그 중 오탐 선택 방지, 대형 컨테이너 선택 차단
+- 단축키: Ctrl/Cmd+Shift+X 토글, Ctrl+Z/Y undo/redo
 
 ---
 
