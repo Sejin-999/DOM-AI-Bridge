@@ -11,6 +11,41 @@
   const C = window.__AGT_CONTENT;
 
   // ──────────────────────────────────────────
+  // 콘솔 에러 수집 (MAIN world → ISOLATED world via postMessage)
+  // ──────────────────────────────────────────
+  const _consoleErrors = [];
+  const _consoleErrorSeen = {};
+
+  function _addConsoleEntry(entry) {
+    if (!entry || typeof entry.message !== 'string') return;
+    const key = (entry.type || '') + '::' + entry.message.slice(0, 300);
+    if (_consoleErrorSeen[key]) return;
+    _consoleErrorSeen[key] = true;
+    if (_consoleErrors.length < 100) {
+      _consoleErrors.push(entry);
+    }
+  }
+
+  window.addEventListener('message', function (event) {
+    if (!event.data || event.source !== window) return;
+
+    // 실시간 에러 수신
+    if (event.data.__AGT_CONSOLE_CAPTURE__) {
+      _addConsoleEntry(event.data.entry);
+      return;
+    }
+
+    // 버퍼 응답 수신 (초기 로드 시 유실된 에러 복구)
+    if (event.data.__AGT_CONSOLE_BUFFER__) {
+      const errors = Array.isArray(event.data.errors) ? event.data.errors : [];
+      errors.forEach(_addConsoleEntry);
+    }
+  }, true);
+
+  // MAIN world에 버퍼 요청 (document_start에서 발생한 에러 복구)
+  window.postMessage({ __AGT_REQUEST_ERRORS__: true }, '*');
+
+  // ──────────────────────────────────────────
   // Undo / Redo
   // ──────────────────────────────────────────
   function undo() {
@@ -341,6 +376,10 @@
           [C.MARKER_VISIBILITY_STORAGE_KEY]: finalVisible
         }).catch(() => {});
         sendResponse({ ok: true, visible: finalVisible });
+        break;
+      }
+      case 'GET_CONSOLE_ERRORS': {
+        sendResponse({ errors: _consoleErrors.slice() });
         break;
       }
       case 'EDIT_ANNOTATION': {

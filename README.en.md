@@ -207,6 +207,60 @@ MCP server integration is planned for deeper automation — **select DOM → AI 
 
 ---
 
+## Changelog
+
+### v1.0.3
+**New Features**
+- Console error log collection and export (error include toggle)
+- WebSocket error detection
+- Error buffering to recover logs lost before content script loads
+- Copy error log even when no elements are selected
+
+**Bug Fixes**
+- Fixed toggle button text being clipped on restricted pages (chrome://)
+
+---
+
+### v1.0.2
+**New Features**
+- iframe element selection with frame context in exports
+- Search highlight scroll position sync
+- Content script modularization (overlay and content split into focused files)
+
+**Bug Fixes**
+- Fixed search highlight box not following scroll position
+- Fixed iframe inner elements not being selectable
+
+---
+
+### v1.0.1
+**New Features**
+- Webhook multi-target management with detailed options
+- Export format labels updated (AI / Developer / Share)
+- Japanese (ja) locale added, i18n foundation introduced
+- Marker visibility toggle
+- SPA route change detection (pushState patch + MutationObserver)
+
+**Bug Fixes**
+- Fixed stale highlights remaining after route change
+- Fixed default locale fallback order
+
+---
+
+### v1.0.0
+**New Features**
+- DOM element selection with numbered badges
+- Automatic CSS selector generation (ID > attribute > class > nth-child)
+- Annotation popover (Enter=save, Shift+Enter=newline, Esc=cancel)
+- Undo / Redo (up to 50 steps)
+- Export: AI Markdown / Developer Markdown / Plain Text / JSON
+- Hover / Selected / Search highlights
+- Draggable counter toolbar
+- Drag threshold to prevent accidental selection, large container blocking
+- Shortcuts: Ctrl/Cmd+Shift+X toggle, Ctrl+Z/Y undo/redo
+
+---
+
 ## Privacy
 
 - All data is processed **locally only**
