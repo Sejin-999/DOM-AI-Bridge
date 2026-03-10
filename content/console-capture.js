@@ -101,6 +101,48 @@
     window.WebSocket.CLOSED = _OrigWS.CLOSED;
   }
 
+  // fetch 4xx/5xx 에러 감지
+  if (typeof fetch !== 'undefined') {
+    var _origFetch = fetch;
+    window.fetch = function () {
+      var args = Array.prototype.slice.call(arguments);
+      var url = args[0] && (typeof args[0] === 'string' ? args[0] : args[0].url || String(args[0]));
+      return _origFetch.apply(this, args).then(function (res) {
+        if (!res.ok) {
+          emit('network', res.status + ' ' + res.statusText + ' — ' + String(url).slice(0, 200), '');
+        }
+        return res;
+      }, function (err) {
+        emit('network', 'fetch failed: ' + String(err.message || err) + ' — ' + String(url).slice(0, 200), '');
+        throw err;
+      });
+    };
+  }
+
+  // XMLHttpRequest 4xx/5xx 에러 감지
+  if (typeof XMLHttpRequest !== 'undefined') {
+    var _origOpen = XMLHttpRequest.prototype.open;
+    var _origSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function (method, url) {
+      this.__agtUrl = String(url).slice(0, 200);
+      return _origOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function () {
+      var xhr = this;
+      xhr.addEventListener('load', function () {
+        if (xhr.status >= 400) {
+          emit('network', xhr.status + ' ' + xhr.statusText + ' — ' + (xhr.__agtUrl || ''), '');
+        }
+      });
+      xhr.addEventListener('error', function () {
+        emit('network', 'XHR failed — ' + (xhr.__agtUrl || ''), '');
+      });
+      return _origSend.apply(this, arguments);
+    };
+  }
+
   // ISOLATED world 요청 시 버퍼 전달
   window.addEventListener('message', function (e) {
     if (!e.data || e.data.__AGT_REQUEST_ERRORS__ !== true) return;
