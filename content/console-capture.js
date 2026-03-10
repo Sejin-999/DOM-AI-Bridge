@@ -68,11 +68,22 @@
     return _origWarn.apply(console, arguments);
   };
 
-  // 처리되지 않은 JS 오류
+  // JS 오류 + 리소스 로드 실패 (img, script, link 등 401/404 포함)
   window.addEventListener('error', function (e) {
+    var target = e.target;
+    // 리소스 로드 에러 (e.target이 DOM 요소인 경우)
+    if (target && target !== window && target.tagName) {
+      var tag = target.tagName.toUpperCase();
+      var url = target.src || target.href || target.currentSrc || '';
+      if (url) {
+        emit('network', tag + ' load failed: ' + String(url).slice(0, 300), '');
+      }
+      return;
+    }
+    // JS 오류
     var msg = (e && e.message) ? e.message : String(e);
     var src = (e && e.filename) ? (e.filename + ':' + (e.lineno || 0) + ':' + (e.colno || 0)) : '';
-    emit('uncaught', msg, src);
+    if (msg) emit('uncaught', msg, src);
   }, true);
 
   // 처리되지 않은 Promise rejection
