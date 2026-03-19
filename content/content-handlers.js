@@ -183,9 +183,12 @@
     return false;
   }
 
+  const TABLE_TAGS = new Set(['TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','CAPTION']);
+
   function isGlobalContainerElement(el) {
     if (!(el instanceof Element)) return false;
     if (el === document.documentElement || el === document.body) return true;
+    if (TABLE_TAGS.has(el.tagName)) return false;
 
     const rect = el.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return false;
