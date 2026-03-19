@@ -144,7 +144,8 @@
     ];
 
     selections.forEach((sel, i) => {
-      const text = sel.innerText ? `"${sel.innerText.slice(0, 100)}"` : null;
+      // Truncation is already handled at collect time (200 chars in collectElementData).
+      const text = sel.innerText ? `"${sel.innerText}"` : null;
       const hasAnnotation = sel.annotation && sel.annotation.trim();
       const frameContext = sel && sel.frameContext && typeof sel.frameContext === 'object'
         ? sel.frameContext
