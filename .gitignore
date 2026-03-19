@@ -1,0 +1,9 @@
+# Local dev / Claude Code
+.claude/
+.mcp.json
+
+# Analysis docs (internal only)
+docs/solv-table/
+
+# macOS
+.DS_Store
