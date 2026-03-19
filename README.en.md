@@ -18,7 +18,7 @@
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.3-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.4-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -153,8 +153,8 @@ UI Annotations — https://example.com
 
 ## Installation
 
-### Chrome Web Store (V.1.0.3)
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.3 </a>
+### Chrome Web Store (V.1.0.4)
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.4 </a>
 
 ### Load as unpacked extension (developer mode)
 
@@ -208,6 +208,18 @@ MCP server integration is planned for deeper automation — **select DOM → AI 
 ---
 
 ## Changelog
+
+### v1.0.4
+**Bug Fixes**
+- Fixed large table elements being blocked from selection due to viewport size check (BUG-05)
+- Fixed numbered badge overlapping the row above on rowspan cells (BUG-07)
+- Removed double text truncation in AI export (BUG-06, BUG-10)
+- Fixed hidden text from display:none elements leaking into export (BUG-03)
+
+**Improvements**
+- AI export now includes table semantic context — when a cell is selected, output includes visible row index, column index, rowspan/colspan, and multi-level header hierarchy
+
+---
 
 ### v1.0.3
 **New Features**

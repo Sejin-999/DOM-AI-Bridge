@@ -20,7 +20,7 @@
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.3-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.4-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -161,9 +161,9 @@ UI 주석 — https://example.com
 
 ## 설치 방법
 
-### Chrome Web Store (V.1.0.3)
+### Chrome Web Store (V.1.0.4)
 >
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.3 </a>
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.4 </a>
 
 ### 개발자 모드로 직접 설치
 
@@ -218,6 +218,18 @@ MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 �
 ---
 
 ## 버전 히스토리
+
+### v1.0.4
+**버그 픽스**
+- 뷰포트를 크게 차지하는 table 요소 선택이 차단되던 문제 수정 (BUG-05)
+- rowspan 셀에서 순번 배지가 위쪽 행과 겹치던 문제 수정 (BUG-07)
+- AI export 텍스트 이중 슬라이싱 제거 (BUG-06, BUG-10)
+- display:none 요소 선택 시 hidden 텍스트가 export에 포함되던 문제 수정 (BUG-03)
+
+**기능 개선**
+- AI export에 table semantic context 추가 — 셀 선택 시 visible row index, 컬럼 인덱스, rowspan/colspan, 다단 헤더 계층 정보 포함
+
+---
 
 ### v1.0.3
 **추가된 기능**
