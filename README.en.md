@@ -13,12 +13,12 @@
   
   <p>A Chrome extension that lets you click DOM elements on any webpage and export them directly as AI prompts.</p>
   <p>Reads the real DOM directly — no virtual DOM dependency. Works on <b>any web environment</b>.</p>
-  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">Official site</a> (in development)</p>
+  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">Official site</a></p>
 
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.1-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.3-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -153,8 +153,8 @@ UI Annotations — https://example.com
 
 ## Installation
 
-### Chrome Web Store (V.1.0.1)
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.1 </a>
+### Chrome Web Store (V.1.0.3)
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.3 </a>
 
 ### Load as unpacked extension (developer mode)
 
@@ -261,11 +261,37 @@ MCP server integration is planned for deeper automation — **select DOM → AI 
 
 ---
 
-## Privacy
+## Permissions and Privacy
 
-- All data is processed **locally only**
-- No user data is stored on external servers
-- Works in air-gapped environments
+DOM AI Bridge works by letting the user select the real DOM on the page they are currently viewing.
+That is why it uses `host_permissions: <all_urls>`, but this does not mean background scraping or silent collection.
+
+### Why is `<all_urls>` required?
+
+- Users need to select DOM elements on arbitrary webpages, not only on a fixed allowlist of domains.
+- If host access were limited to a few domains, the extension would fail on many legitimate user workflows.
+- This permission exists to make the selection UI available broadly, not to collect browsing data for a remote service.
+
+### Why are `all_frames` and `match_about_blank` required?
+
+- Modern pages often split content into `iframe`s for editors, embeds, payment surfaces, dashboards, and app shells.
+- Without `all_frames: true`, the extension cannot consistently inspect or select elements inside those frames.
+- Without `match_about_blank: true`, it misses DOM inside `about:blank` or `srcdoc` frames.
+- These options are required for complete page-level DOM inspection, including embedded frame contexts.
+
+### When does it actually run?
+
+- The interactive selection flow only becomes active after the user clicks **Start Selecting** in the popup or uses the shortcut.
+- It is not an automatic crawler, auto-clicker, or silent collection tool.
+- Export happens only when the user explicitly clicks **Copy**.
+- Webhook delivery happens only if the user explicitly enables and configures it.
+
+### How is data handled?
+
+- Selection data, page URL, and user settings are processed and stored **locally by default**.
+- The developer does not run a default backend that stores extension data.
+- External transfer happens only if the user enables Webhook and performs a copy action.
+- Core functionality still works in fully offline or air-gapped environments.
 
 Details: [Privacy Policy](./PRIVACY.md)
 

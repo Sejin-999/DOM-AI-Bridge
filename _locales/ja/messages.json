@@ -1,6 +1,6 @@
 {
   "ext_name": { "message": "DOM AI Bridge" },
-  "ext_description": { "message": "DOM要素を選択し、セレクターを生成してJSON/Markdownをオフラインでエクスポートできます。" },
+  "ext_description": { "message": "あらゆるWebページで実DOM要素を選択し、AI向け・開発者向け・共有向けにエクスポートできる拡張機能です。" },
 
   "popup_header_title": { "message": "DOM AI Bridge" },
   "popup_toggle_start": { "message": "選択開始" },

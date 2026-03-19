@@ -120,8 +120,8 @@
    */
   window.__AGT.exportJSON = function (selections) {
     const data = {
-      tool: 'Agentation DOM Inspector',
-      version: '1.0.0',
+      tool: 'DOM AI Bridge',
+      version: '1.0.3',
       url: location.href,
       exportedAt: new Date().toISOString(),
       count: selections.length,
