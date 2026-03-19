@@ -1,15 +1,15 @@
 # Privacy Policy / 개인정보처리방침
 
-Last updated: February 22, 2026  
-최종 업데이트: 2026년 2월 22일
+Last updated: March 19, 2026  
+최종 업데이트: 2026년 3월 19일
 
-This policy applies to the Chrome extension **Agentation DOM Inspector**.
-본 방침은 크롬 확장 프로그램 **Agentation DOM Inspector**에 적용됩니다.
+This policy applies to the Chrome extension **DOM AI Bridge**.
+본 방침은 크롬 확장 프로그램 **DOM AI Bridge**에 적용됩니다.
 
 ## 1) What this extension does / 확장 프로그램 목적
 
-Agentation DOM Inspector helps users select and inspect DOM elements on webpages, then copy/export data in AI, JSON, or Share formats.  
-Agentation DOM Inspector는 웹페이지에서 DOM 요소를 선택/확인하고 AI, JSON, 공유용 포맷으로 복사/내보내기 하도록 돕습니다.
+DOM AI Bridge helps users select and inspect DOM elements on webpages, then copy/export data in AI, JSON, or Share formats.  
+DOM AI Bridge는 웹페이지에서 DOM 요소를 선택/확인하고 AI, JSON, 공유용 포맷으로 복사/내보내기 하도록 돕습니다.
 
 ## 2) Data processed / 처리되는 데이터
 
@@ -37,9 +37,9 @@ Agentation DOM Inspector는 웹페이지에서 DOM 요소를 선택/확인하고
 
 ### B. Data sent externally (only if user enables Webhook) / 외부 전송(사용자가 웹훅을 켠 경우에만)
 
-If Webhook is enabled by the user, the extension sends data to the user-configured webhook endpoint when the user copies in **Share** format.
+If Webhook is enabled by the user, the extension sends data to the user-configured webhook endpoint only when the user explicitly performs a copy action in a matched format.
 
-사용자가 Webhook 기능을 활성화한 경우에만, **공유용(Share)** 복사 시 사용자 지정 웹훅 엔드포인트로 데이터가 전송됩니다.
+사용자가 Webhook 기능을 활성화한 경우에만, 사용자가 명시적으로 복사 액션을 수행했을 때 매칭된 포맷 기준으로 사용자 지정 웹훅 엔드포인트로 데이터가 전송됩니다.
 
 Payload may include:
 
@@ -106,12 +106,20 @@ Webhook를 활성화하면 데이터가 사용자가 지정한 엔드포인트�
 - `activeTab`: interact with the current tab when user uses the extension
 - `storage`: save user preferences
 - `scripting`: run DOM selection/highlight behavior
-- `host_permissions (<all_urls>)`: support DOM inspection across arbitrary webpages
+- `host_permissions (<all_urls>)`: support DOM inspection across arbitrary webpages chosen by the user
+- `all_frames`: allow selection/highlighting inside iframe content as part of the current page
+- `match_about_blank`: include `about:blank` / `srcdoc` frames that many apps use internally
 
 - `activeTab`: 사용자가 확장 기능을 실행한 현재 탭과 상호작용
 - `storage`: 사용자 설정 저장
 - `scripting`: DOM 선택/하이라이트 기능 실행
-- `host_permissions (<all_urls>)`: 다양한 웹페이지에서 DOM 검사 기능 제공
+- `host_permissions (<all_urls>)`: 사용자가 연 웹페이지 전반에서 DOM 검사 기능 제공
+- `all_frames`: 현재 페이지의 일부인 iframe 내부 요소도 선택/하이라이트 가능하게 함
+- `match_about_blank`: 많은 웹앱이 내부적으로 사용하는 `about:blank` / `srcdoc` 프레임까지 포함함
+
+The extension is designed around explicit user action. Selection UI becomes active only after the user clicks the popup button or uses the shortcut, and export/transmission happens only when the user explicitly copies data.
+
+본 확장 프로그램은 명시적 사용자 액션을 전제로 설계되었습니다. 팝업 버튼 클릭 또는 단축키 실행 이후에만 선택 UI가 활성화되며, 내보내기/전송도 사용자가 직접 복사를 실행한 경우에만 발생합니다.
 
 ## 8) Changes to this policy / 방침 변경
 
@@ -126,4 +134,3 @@ Material updates will be reflected by changing the "Last updated" date above.
 - Developer: Yang Sejin  
 - GitHub: https://github.com/Sejin-999  
 - Email: sejinyang49@gmail.com
-

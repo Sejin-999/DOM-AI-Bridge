@@ -1,6 +1,6 @@
 {
   "ext_name": { "message": "DOM AI Bridge" },
-  "ext_description": { "message": "Select DOM elements, generate selectors, and export JSON/Markdown fully offline." },
+  "ext_description": { "message": "Select real DOM elements on any webpage and export them to AI, developer, or share workflows." },
 
   "popup_header_title": { "message": "DOM AI Bridge" },
   "popup_toggle_start": { "message": "Start Selecting" },

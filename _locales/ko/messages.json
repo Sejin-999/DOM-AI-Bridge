@@ -1,6 +1,6 @@
 {
   "ext_name": { "message": "DOM AI Bridge" },
-  "ext_description": { "message": "DOM 요소 선택, 셀렉터 생성, JSON/Markdown Export — 오프라인 완전 동작" },
+  "ext_description": { "message": "어떤 웹페이지에서든 실제 DOM 요소를 선택하고 AI용, 개발자용, 공유용으로 내보내는 확장 프로그램" },
 
   "popup_header_title": { "message": "DOM AI Bridge" },
   "popup_toggle_start": { "message": "선택 시작" },

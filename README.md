@@ -15,12 +15,12 @@
   
   <p>웹 페이지의 DOM 요소를 직접 클릭해서 선택하고, AI 프롬프트로 바로 내보내는 Chrome 익스텐션</p>
   <p>가상 DOM에 의존하지 않고 실제 DOM을 직접 읽기 때문에, <b>모든 웹 환경에서 동작합니다.</b></p>
-  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">공식 사이트</a> (개발중)</p>
+  <p>🌐 <a href="https://dom-ai-bridge.pages.dev/">공식 사이트</a></p>
 
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.1-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.3-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -161,9 +161,9 @@ UI 주석 — https://example.com
 
 ## 설치 방법
 
-### Chrome Web Store (V.1.0.1)
+### Chrome Web Store (V.1.0.3)
 >
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.1 </a>
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.3 </a>
 
 ### 개발자 모드로 직접 설치
 
@@ -271,11 +271,37 @@ MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 �
 
 ---
 
-## Privacy
+## 권한과 개인정보
 
-- 모든 데이터는 **로컬에서만 처리**
-- 외부 서버에 사용자 데이터 저장 없음
-- 폐쇄망 환경에서도 사용 가능
+DOM AI Bridge는 페이지의 실제 DOM을 직접 선택하는 도구이기 때문에, 사용자가 보고 있는 임의의 웹페이지에서 동작할 수 있어야 합니다.
+그래서 `host_permissions: <all_urls>`를 사용하지만, 이것이 백그라운드에서 자동 수집한다는 뜻은 아닙니다.
+
+### 왜 `<all_urls>`가 필요한가요?
+
+- 사용자가 어떤 사이트에서든 DOM 요소를 클릭해 선택할 수 있어야 합니다.
+- 특정 도메인만 허용하면, 스토어 심사 후 실제 사용 환경에서 많은 사이트가 바로 비대상이 됩니다.
+- 이 권한은 "어디서든 선택 UI를 띄울 수 있는 범위"를 위한 것이지, 별도 서버로 데이터를 모으기 위한 권한이 아닙니다.
+
+### 왜 `all_frames`, `match_about_blank`가 필요한가요?
+
+- 현대 웹페이지는 본문, 임베드, 에디터, 결제창, 광고/도구 패널 등을 `iframe`으로 자주 분리합니다.
+- `all_frames: true`가 없으면 iframe 내부 요소를 선택하거나 강조할 수 없습니다.
+- `match_about_blank: true`가 없으면 `about:blank` 또는 `srcdoc` 기반 iframe 안의 요소를 놓치게 됩니다.
+- 즉, 이 옵션들은 "페이지 전체 DOM 문맥을 일관되게 선택"하기 위해 필요합니다.
+
+### 언제 동작하나요?
+
+- 사용자가 팝업에서 **Start Selecting**을 누르거나 단축키로 선택 모드를 켠 뒤에만 선택 UI가 실질적으로 동작합니다.
+- 자동 클릭, 자동 전송, 자동 수집 도구가 아닙니다.
+- 사용자가 명시적으로 **Copy**를 눌렀을 때만 내보내기가 발생합니다.
+- Webhook 전송도 사용자가 직접 활성화하고 설정한 경우에만 동작합니다.
+
+### 데이터는 어떻게 처리되나요?
+
+- 선택 정보, URL, 하이라이트 설정 등은 기본적으로 **로컬에서만 처리 및 저장**됩니다.
+- 개발자가 운영하는 기본 백엔드에 사용자 데이터를 저장하지 않습니다.
+- 외부 전송은 사용자가 Webhook를 켜고, 복사 액션을 수행한 경우에만 발생합니다.
+- 폐쇄망 환경에서도 기본 기능은 그대로 사용할 수 있습니다.
 
 자세한 내용: [개인정보처리방침](./PRIVACY.md)
 
