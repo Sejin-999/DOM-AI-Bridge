@@ -122,8 +122,8 @@
       attrs[attr.name] = attr.value;
     }
 
-    // innerText 정리 (최대 200자)
-    const rawText = (el.innerText || el.textContent || '').trim();
+    // 항상 innerText 기반으로만 수집 — textContent fallback 제거 (hidden 텍스트 포함 방지)
+    const rawText = (el.innerText || '').trim();
     const innerText = rawText.length > 200 ? rawText.slice(0, 200) + '…' : rawText;
     const tableContext = getTableContext(el);
 
