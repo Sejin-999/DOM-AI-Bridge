@@ -8,6 +8,106 @@
 
   window.__AGT = window.__AGT || {};
 
+  function getColumnHeaders(cell) {
+    const table = cell.closest('table');
+    if (!table) return [];
+
+    const thead = table.querySelector('thead');
+    if (!thead) return [];
+
+    const headerRows = Array.from(thead.querySelectorAll('tr'));
+    if (headerRows.length === 0) return [];
+
+    // find column index of this cell (colspan-aware)
+    const row = cell.closest('tr');
+    if (!row) return [];
+    let colIndex = 0;
+    for (const c of Array.from(row.cells)) {
+      if (c === cell) break;
+      colIndex += (c.colSpan || 1);
+    }
+
+    // collect header text from each header row at that column position
+    const headers = [];
+    for (const hRow of headerRows) {
+      let pos = 0;
+      for (const hCell of Array.from(hRow.cells)) {
+        const span = hCell.colSpan || 1;
+        if (pos <= colIndex && colIndex < pos + span) {
+          const text = (hCell.innerText || hCell.textContent || '').trim();
+          if (text) headers.push(text);
+          break;
+        }
+        pos += span;
+      }
+    }
+
+    return headers;
+  }
+
+  function getTableContext(el) {
+    const CELL_TAGS = new Set(['TD', 'TH']);
+    const TABLE_STRUCTURE_TAGS = new Set(['TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'CAPTION']);
+
+    if (!TABLE_STRUCTURE_TAGS.has(el.tagName)) return null;
+
+    const ctx = { tagName: el.tagName };
+
+    if (CELL_TAGS.has(el.tagName)) {
+      // rowspan / colspan
+      ctx.rowspan = el.rowSpan > 1 ? el.rowSpan : undefined;
+      ctx.colspan = el.colSpan > 1 ? el.colSpan : undefined;
+
+      // visual column index (1-based, colspan-aware)
+      const row = el.closest('tr');
+      if (row) {
+        let col = 0;
+        for (const cell of Array.from(row.cells)) {
+          if (cell === el) break;
+          col += (cell.colSpan || 1);
+        }
+        ctx.colIndex = col + 1;
+      }
+
+      // visible row index (1-based, skips display:none rows)
+      const table = el.closest('table');
+      if (table) {
+        const allRows = Array.from(table.querySelectorAll('tr'));
+        const visibleRows = allRows.filter(r => getComputedStyle(r).display !== 'none');
+        const currentRow = el.closest('tr');
+        const idx = visibleRows.indexOf(currentRow);
+        ctx.visibleRowIndex = idx >= 0 ? idx + 1 : undefined;
+      }
+
+      // column headers from thead (multi-level aware)
+      ctx.columnHeaders = getColumnHeaders(el);
+    }
+
+    if (el.tagName === 'TR') {
+      // visible row index for TR
+      const table = el.closest('table');
+      if (table) {
+        const allRows = Array.from(table.querySelectorAll('tr'));
+        const visibleRows = allRows.filter(r => getComputedStyle(r).display !== 'none');
+        const idx = visibleRows.indexOf(el);
+        ctx.visibleRowIndex = idx >= 0 ? idx + 1 : undefined;
+      }
+    }
+
+    if (el.tagName === 'TABLE') {
+      const allRows = Array.from(el.querySelectorAll('tr'));
+      const visibleRows = allRows.filter(r => getComputedStyle(r).display !== 'none');
+      ctx.visibleRowCount = visibleRows.length;
+      // column count from first row
+      const firstRow = el.querySelector('tr');
+      if (firstRow) {
+        ctx.colCount = Array.from(firstRow.cells).reduce((sum, c) => sum + (c.colSpan || 1), 0);
+      }
+    }
+
+    return ctx;
+  }
+
   /**
    * 요소의 모든 컨텍스트 데이터 수집
    * @param {Element} el
@@ -25,12 +125,13 @@
     // innerText 정리 (최대 200자)
     const rawText = (el.innerText || el.textContent || '').trim();
     const innerText = rawText.length > 200 ? rawText.slice(0, 200) + '…' : rawText;
+    const tableContext = getTableContext(el);
 
     const selector = window.__AGT.generateSelector
       ? window.__AGT.generateSelector(el)
       : { selector: el.tagName.toLowerCase(), strategy: 'fallback' };
 
-    return {
+    const data = {
       id: `sel_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       selector: selector.selector,
       strategy: selector.strategy,
@@ -46,6 +147,10 @@
       url: location.href,
       timestamp: Date.now()
     };
+
+    if (tableContext) data.tableContext = tableContext;
+
+    return data;
   };
 
   /**
@@ -161,6 +266,18 @@
       lines.push(`**[${i + 1}] ${sel.tagName}** \`${selectorText}\``);
       if (frameContext) lines.push(`Frame: ${frameLabel}`);
       if (text) lines.push(`Text: ${text}`);
+      if (sel.tableContext) {
+        const tc = sel.tableContext;
+        const parts = [];
+        if (tc.visibleRowIndex !== undefined) parts.push(`Row ${tc.visibleRowIndex}`);
+        if (tc.colIndex !== undefined) parts.push(`Col ${tc.colIndex}`);
+        if (tc.rowspan) parts.push(`rowspan=${tc.rowspan}`);
+        if (tc.colspan) parts.push(`colspan=${tc.colspan}`);
+        if (tc.columnHeaders && tc.columnHeaders.length > 0) parts.push(`Header: ${tc.columnHeaders.join(' > ')}`);
+        if (tc.visibleRowCount !== undefined) parts.push(`${tc.visibleRowCount} rows`);
+        if (tc.colCount !== undefined) parts.push(`${tc.colCount} cols`);
+        if (parts.length > 0) lines.push(`  Table: ${parts.join(' | ')}`);
+      }
       if (hasAnnotation) lines.push(`> ${sel.annotation}`);
       lines.push(``);
     });
