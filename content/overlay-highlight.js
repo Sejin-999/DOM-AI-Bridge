@@ -42,8 +42,8 @@
   }
 
   function positionOrderBadge(badgeEl, rect) {
-    const left = Math.max(0, rect.left - 8);
-    const top = Math.max(0, rect.top - 10);
+    const left = Math.max(0, rect.left + 4);
+    const top = Math.max(0, rect.top + 4);
     Object.assign(badgeEl.style, {
       left: `${left}px`,
       top: `${top}px`
