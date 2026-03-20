@@ -18,7 +18,7 @@
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.4-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.5-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -122,7 +122,9 @@ UI Annotations — https://example.com
 
 ### DOM Selection & Annotation
 - Click to select elements, with auto-numbered badges
-- Annotation popover (press Enter to add quickly)
+- Copy & Add: instantly copy AI-formatted text from the popover (`Enter`)
+- Add only: add without using the clipboard (`Alt+Enter`, dropdown)
+- Item accumulation mode: toggle in Settings; when OFF, each new item clears previous selections
 - Undo / Redo (up to 50 steps)
 - Auto CSS selector generation (ID → semantic attributes → class combinations → path)
 
@@ -153,8 +155,8 @@ UI Annotations — https://example.com
 
 ## Installation
 
-### Chrome Web Store (V.1.0.4)
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.4 </a>
+### Chrome Web Store (V.1.0.5)
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> Download V 1.0.5 </a>
 
 ### Load as unpacked extension (developer mode)
 
@@ -208,6 +210,15 @@ MCP server integration is planned for deeper automation — **select DOM → AI 
 ---
 
 ## Changelog
+
+### v1.0.5
+**New Features**
+- Added a split Copy & Add button: `Enter` copies AI-formatted text and adds immediately, while `Alt+Enter` or the dropdown triggers Add only
+- Added item accumulation mode in Settings: when OFF, each new item clears previous selections
+
+**Bug Fixes**
+- Fixed undo snapshots for Copy & Add while accumulation mode is OFF
+- Added defensive handling for Clipboard API unavailable/failure cases so the item is still added and a failure toast is shown
 
 ### v1.0.4
 **Bug Fixes**

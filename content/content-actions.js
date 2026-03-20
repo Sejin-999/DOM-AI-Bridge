@@ -130,6 +130,7 @@
   }
 
   function handleCopyAdd(data, annotationText) {
+    C.pushUndo();
     if (!C.State.accumulateMode) {
       C.State.selections = [];
       window.__AGT.clearAllHighlights();
@@ -139,7 +140,6 @@
       }
     }
     data.annotation = annotationText;
-    C.pushUndo();
     C.State.selections.push(data);
     const el = window.__AGT.safeQuerySelector(data.selector);
     if (el) {
@@ -149,8 +149,15 @@
     saveToStorage();
     broadcastState();
 
-    const aiText = window.__AGT.exportAI([data]);
-    if (!aiText) return;
+    const aiText = typeof window.__AGT.exportAI === 'function'
+      ? window.__AGT.exportAI([data])
+      : '';
+    if (typeof aiText !== 'string' || aiText.trim() === '') return;
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+      showContentToast('copy-failed');
+      console.warn('[DOM AI Bridge] Clipboard API unavailable');
+      return;
+    }
     navigator.clipboard.writeText(aiText).then(() => {
       showContentToast('copied');
     }).catch(() => {

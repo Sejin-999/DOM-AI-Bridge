@@ -85,7 +85,8 @@
   "popup_shortcut_undo": { "message": "元に戻す" },
   "popup_shortcut_redo": { "message": "やり直し" },
   "popup_shortcut_popover_cancel": { "message": "ポップオーバー取消/終了" },
-  "popup_shortcut_add": { "message": "注釈確定 (Add)" },
+  "popup_shortcut_add": { "message": "コピーして追加" },
+  "popup_shortcut_add_only": { "message": "追加のみ" },
   "popup_shortcut_newline": { "message": "ポップオーバー改行" },
 
   "popup_palette_title_selected": { "message": "選択色 {color}" },

@@ -85,7 +85,8 @@
   "popup_shortcut_undo": { "message": "Undo" },
   "popup_shortcut_redo": { "message": "Redo" },
   "popup_shortcut_popover_cancel": { "message": "Close/cancel popover" },
-  "popup_shortcut_add": { "message": "Confirm annotation (Add)" },
+  "popup_shortcut_add": { "message": "Copy & Add" },
+  "popup_shortcut_add_only": { "message": "Add only" },
   "popup_shortcut_newline": { "message": "Popover line break" },
 
   "popup_palette_title_selected": { "message": "Selected color {color}" },

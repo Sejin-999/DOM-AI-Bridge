@@ -85,7 +85,8 @@
   "popup_shortcut_undo": { "message": "실행 취소" },
   "popup_shortcut_redo": { "message": "다시 실행" },
   "popup_shortcut_popover_cancel": { "message": "팝오버 취소/종료" },
-  "popup_shortcut_add": { "message": "주석 확정 (Add)" },
+  "popup_shortcut_add": { "message": "복사 후 추가" },
+  "popup_shortcut_add_only": { "message": "추가만" },
   "popup_shortcut_newline": { "message": "팝오버 줄바꿈" },
 
   "popup_palette_title_selected": { "message": "선택 색상 {color}" },

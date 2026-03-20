@@ -226,7 +226,7 @@
   window.__AGT.exportJSON = function (selections) {
     const data = {
       tool: 'DOM AI Bridge',
-      version: '1.0.3',
+      version: '1.0.5',
       url: location.href,
       exportedAt: new Date().toISOString(),
       count: selections.length,

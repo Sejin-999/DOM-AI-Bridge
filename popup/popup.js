@@ -87,6 +87,7 @@
     { labelKey: 'popup_shortcut_redo', win: 'Ctrl+Y', mac: 'Cmd+Shift+Z' },
     { labelKey: 'popup_shortcut_popover_cancel', win: 'Esc', mac: 'Esc' },
     { labelKey: 'popup_shortcut_add', win: 'Enter', mac: 'Enter' },
+    { labelKey: 'popup_shortcut_add_only', win: 'Alt+Enter', mac: 'Option+Enter' },
     { labelKey: 'popup_shortcut_newline', win: 'Shift+Enter', mac: 'Shift+Enter' }
   ];
   const CONTENT_SCRIPT_FILES = [

@@ -20,7 +20,7 @@
   <br>
 
   <a href="https://github.com/Sejin-999/DOM-AI-Bridge">
-    <img src="https://img.shields.io/badge/version-1.0.4-blue" alt="version" />
+    <img src="https://img.shields.io/badge/version-1.0.5-blue" alt="version" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="manifest v3" />
   <img src="https://img.shields.io/badge/license-MIT-gray" alt="license" />
@@ -129,7 +129,9 @@ UI 주석 — https://example.com
 ### DOM 선택 & 주석
 
 - 클릭으로 요소 선택, 순번 배지 자동 표시
-- 주석 입력 팝오버 (Enter로 빠르게 추가)
+- Copy & Add: 팝오버에서 즉시 AI 포맷 클립보드 복사 (`Enter`)
+- Add only: 클립보드 없이 항목만 추가 (`Alt+Enter`, 드롭다운)
+- 항목 누적 모드: Settings에서 ON/OFF, OFF 시 새 항목 추가마다 기존 선택 초기화
 - Undo / Redo 지원 (최대 50단계)
 - CSS 셀렉터 자동 생성 (ID → 시맨틱 속성 → 클래스 → 경로 순)
 
@@ -161,9 +163,9 @@ UI 주석 — https://example.com
 
 ## 설치 방법
 
-### Chrome Web Store (V.1.0.4)
+### Chrome Web Store (V.1.0.5)
 >
-> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.4 </a>
+> <a href = "https://chromewebstore.google.com/detail/dom-ai-bridge/gipfclelhppmafdlajajjkfepiiccnfd"> V 1.0.5 </a>
 
 ### 개발자 모드로 직접 설치
 
@@ -218,6 +220,15 @@ MCP 서버 연동을 통해 **DOM 선택 → AI → 코드 반영**까지 더 �
 ---
 
 ## 버전 히스토리
+
+### v1.0.5
+**추가된 기능**
+- Copy & Add 분리 버튼 추가: Enter로 즉시 AI 포맷 복사 후 추가, Alt+Enter 또는 드롭다운으로 Add only 지원
+- Settings에 항목 누적 모드 추가: OFF 시 새 항목 추가마다 기존 선택 초기화
+
+**버그 픽스**
+- accumulate OFF 상태의 Copy & Add에서 undo 스냅샷이 잘못 남던 문제 수정
+- Clipboard API 미지원/실패 시 추가는 유지하고 실패 토스트를 표시하도록 방어 처리
 
 ### v1.0.4
 **버그 픽스**
