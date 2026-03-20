@@ -103,6 +103,12 @@
   void C.syncI18nState();
   C.loadHighlightColorsFromStorage();
   C.loadMarkerVisibilityFromStorage();
+  // accumulate 모드 초기화
+  chrome.storage.local.get(C.ACCUMULATE_MODE_STORAGE_KEY, (result) => {
+    if (chrome.runtime.lastError) return;
+    const val = result && result[C.ACCUMULATE_MODE_STORAGE_KEY];
+    C.State.accumulateMode = typeof val === 'boolean' ? val : true;
+  });
   if (!C.IS_TOP_FRAME) {
     C.postFrameHelloToTop();
   }

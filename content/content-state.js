@@ -13,6 +13,7 @@
     // ──────────────────────────────────────────
     State: {
       isActive: false,
+      accumulateMode: true,
       selections: [],
       undoStack: [],
       redoStack: [],
@@ -42,6 +43,7 @@
     TOGGLE_SHORTCUT_KEY: 'x',
     HIGHLIGHT_COLOR_STORAGE_KEY: 'agt_highlight_colors',
     MARKER_VISIBILITY_STORAGE_KEY: 'agt_marker_visibility',
+    ACCUMULATE_MODE_STORAGE_KEY: 'agt_accumulate_mode',
     I18N_LOCALE_STORAGE_KEY: 'agt_locale',
     FRAME_BRIDGE_FLAG: '__agtFrameBridge__',
     FRAME_SYNC_TYPE: 'AGT_FRAME_SYNC',

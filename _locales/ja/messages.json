@@ -145,5 +145,12 @@
   "overlay_counter_label": { "message": "選択" },
   "overlay_popover_placeholder": { "message": "何を変更しますか？" },
   "overlay_popover_cancel": { "message": "キャンセル" },
-  "overlay_popover_add": { "message": "追加" }
+  "overlay_popover_add": { "message": "追加" },
+  "overlay_popover_copy_add": { "message": "コピーして追加" },
+  "overlay_popover_add_only": { "message": "追加のみ" },
+  "popup_settings_accumulate_title": { "message": "アイテム蓄積" },
+  "popup_settings_accumulate_label": { "message": "新規追加時に既存アイテムを保持" },
+  "popup_settings_accumulate_desc": { "message": "OFFの場合、新しいアイテムを追加するたびに以前の選択がクリアされます。" },
+  "overlay_toast_copied": { "message": "コピーしました" },
+  "overlay_toast_copy_failed": { "message": "コピー失敗" }
 }

@@ -435,6 +435,11 @@
       return;
     }
 
+    if (cmd === 'SET_ACCUMULATE_MODE') {
+      C.State.accumulateMode = !!(command.accumulateMode);
+      return;
+    }
+
     if (cmd === 'I18N_REFRESH') {
       void window.__AGT_CONTENT.syncI18nState();
     }

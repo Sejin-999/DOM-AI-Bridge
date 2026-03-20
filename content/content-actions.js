@@ -129,6 +129,74 @@
     broadcastState();
   }
 
+  function handleCopyAdd(data, annotationText) {
+    if (!C.State.accumulateMode) {
+      C.State.selections = [];
+      window.__AGT.clearAllHighlights();
+      if (C.IS_TOP_FRAME) {
+        C.broadcastCommandToChildFrames({ cmd: 'CLEAR_ALL' });
+        C.clearAllChildFramesInMap();
+      }
+    }
+    data.annotation = annotationText;
+    C.pushUndo();
+    C.State.selections.push(data);
+    const el = window.__AGT.safeQuerySelector(data.selector);
+    if (el) {
+      window.__AGT.addSelectedHighlight(el, data.id, C.State.selections.length);
+    }
+    syncHighlightOrderNumbers();
+    saveToStorage();
+    broadcastState();
+
+    const aiText = window.__AGT.exportAI([data]);
+    if (!aiText) return;
+    navigator.clipboard.writeText(aiText).then(() => {
+      showContentToast('copied');
+    }).catch(() => {
+      showContentToast('copy-failed');
+      console.warn('[DOM AI Bridge] Clipboard write failed');
+    });
+  }
+
+  function showContentToast(type) {
+    const existing = document.getElementById('__agt-content-toast__');
+    if (existing) existing.remove();
+
+    const i18n = window.__AGT_I18N;
+    const msg = type === 'copied'
+      ? (i18n && i18n.t ? i18n.t('overlay_toast_copied', null, '복사됨') : '복사됨')
+      : (i18n && i18n.t ? i18n.t('overlay_toast_copy_failed', null, '복사 실패') : '복사 실패');
+
+    const toast = document.createElement('div');
+    toast.id = '__agt-content-toast__';
+    toast.setAttribute('data-agt-own', '1');
+    Object.assign(toast.style, {
+      position: 'fixed',
+      bottom: '24px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: type === 'copied' ? '#22c55e' : '#ef4444',
+      color: '#fff',
+      padding: '8px 18px',
+      borderRadius: '8px',
+      fontSize: '13px',
+      fontWeight: '600',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      zIndex: '2147483647',
+      pointerEvents: 'none',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+      opacity: '1'
+    });
+    toast.textContent = msg;
+    document.documentElement.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 1500);
+  }
+
   // ──────────────────────────────────────────
   // 검색
   // ──────────────────────────────────────────
@@ -413,6 +481,14 @@
         sendResponse(getStateSnapshot());
         break;
       }
+      case 'SET_ACCUMULATE_MODE': {
+        C.State.accumulateMode = !!(payload && payload.accumulateMode);
+        if (C.IS_TOP_FRAME) {
+          C.broadcastCommandToChildFrames({ cmd: 'SET_ACCUMULATE_MODE', accumulateMode: C.State.accumulateMode });
+        }
+        sendResponse({ ok: true });
+        break;
+      }
       default: {
         sendResponse({ error: 'unknown message type' });
       }
@@ -431,6 +507,8 @@
     syncHighlightOrderNumbers,
     removeSelection,
     clearAll,
+    handleCopyAdd,
+    showContentToast,
     search,
     saveToStorage,
     loadFromStorage,

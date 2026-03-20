@@ -243,9 +243,17 @@
         innerText: data.innerText
       },
       function (annotationText) {
+        C.pushUndo();
+        if (!C.State.accumulateMode) {
+          C.State.selections = [];
+          window.__AGT.clearAllHighlights();
+          if (C.IS_TOP_FRAME) {
+            C.broadcastCommandToChildFrames({ cmd: 'CLEAR_ALL' });
+            C.clearAllChildFramesInMap();
+          }
+        }
         window.__AGT.removeSelectedHighlight('__pending__');
         data.annotation = annotationText;
-        C.pushUndo();
         C.State.selections.push(data);
         window.__AGT.addSelectedHighlight(el, data.id, C.State.selections.length);
         window.__AGT_CONTENT.syncHighlightOrderNumbers();
@@ -254,6 +262,11 @@
       },
       function () {
         window.__AGT.removeSelectedHighlight('__pending__');
+      },
+      function (annotationText) {
+        // onCopyAdd
+        window.__AGT.removeSelectedHighlight('__pending__');
+        window.__AGT_CONTENT.handleCopyAdd(data, annotationText);
       }
     );
   }

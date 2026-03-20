@@ -14,8 +14,9 @@
    * @param {Object}   info      - { tagName, selector, innerText }
    * @param {Function} onAdd     - (annotationText) => void
    * @param {Function} onCancel  - () => void
+   * @param {Function} onCopyAdd - (annotationText) => void
    */
-  window.__AGT.showAnnotationPopover = function (targetEl, info, onAdd, onCancel) {
+  window.__AGT.showAnnotationPopover = function (targetEl, info, onAdd, onCancel, onCopyAdd) {
     window.__AGT.hideAnnotationPopover();
 
     const rect = targetEl.getBoundingClientRect();
@@ -42,7 +43,8 @@
     const titleText = `${info.tagName.toLowerCase()} "${(info.innerText || info.selector || '').slice(0, 40)}"`;
     const notePlaceholder = S.t('overlay_popover_placeholder', null, 'What should change?');
     const cancelLabel = S.t('overlay_popover_cancel', null, 'Cancel');
-    const addLabel = S.t('overlay_popover_add', null, 'Add');
+    const copyAddLabel = S.t('overlay_popover_copy_add', null, 'Copy & Add');
+    const addOnlyLabel = S.t('overlay_popover_add_only', null, 'Add only');
 
     S.popoverEl = document.createElement('div');
     S.popoverEl.id = S.POPOVER_ID;
@@ -88,17 +90,34 @@
           line-height:1.5;
         "
       ></textarea>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;position:relative;">
         <button id="__agt-cancel-btn__" style="
           padding:6px 14px;border-radius:6px;
           background:transparent;border:1px solid #475569;
           color:#94a3b8;cursor:pointer;font-size:12px;font-weight:500;
         ">${S.escapeHtmlInner(cancelLabel)}</button>
-        <button id="__agt-add-btn__" style="
-          padding:6px 16px;border-radius:6px;
-          background:#3b82f6;border:none;
-          color:#fff;cursor:pointer;font-size:12px;font-weight:600;
-        ">${S.escapeHtmlInner(addLabel)}</button>
+        <div style="position:relative;display:flex;border-radius:6px;overflow:hidden;">
+          <button id="__agt-copy-add-btn__" style="
+            flex:1;padding:6px 12px;
+            background:#3b82f6;border:none;border-radius:0;
+            color:#fff;cursor:pointer;font-size:12px;font-weight:600;
+          ">${S.escapeHtmlInner(copyAddLabel)}</button>
+          <button id="__agt-dropdown-trigger__" style="
+            padding:6px 8px;
+            background:#3b82f6;border:none;border-left:1px solid rgba(255,255,255,0.25);
+            color:#fff;cursor:pointer;font-size:12px;
+          ">▾</button>
+          <div id="__agt-dropdown-menu__" style="
+            display:none;position:absolute;bottom:calc(100% + 4px);right:0;
+            background:#1e293b;border:1px solid #334155;border-radius:6px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.4);min-width:120px;z-index:2147483647;
+          ">
+            <div id="__agt-add-only-item__" style="
+              padding:8px 12px;font-size:12px;color:#f1f5f9;cursor:pointer;
+              border-radius:6px;
+            ">${S.escapeHtmlInner(addOnlyLabel)}</div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -106,11 +125,22 @@
 
     const textarea = S.popoverEl.querySelector('#__agt-note-input__');
     const cancelBtn = S.popoverEl.querySelector('#__agt-cancel-btn__');
-    const addBtn = S.popoverEl.querySelector('#__agt-add-btn__');
+    const copyAddBtn = S.popoverEl.querySelector('#__agt-copy-add-btn__');
+    const dropdownTrigger = S.popoverEl.querySelector('#__agt-dropdown-trigger__');
+    const dropdownMenu = S.popoverEl.querySelector('#__agt-dropdown-menu__');
+    const addOnlyItem = S.popoverEl.querySelector('#__agt-add-only-item__');
 
     requestAnimationFrame(() => textarea && textarea.focus());
 
-    function doAdd() {
+    let dropdownOpen = false;
+
+    function doCopyAdd() {
+      const text = textarea ? textarea.value.trim() : '';
+      window.__AGT.hideAnnotationPopover();
+      if (onCopyAdd) onCopyAdd(text);
+    }
+
+    function doAddOnly() {
       const text = textarea ? textarea.value.trim() : '';
       window.__AGT.hideAnnotationPopover();
       if (onAdd) onAdd(text);
@@ -121,26 +151,74 @@
       if (onCancel) onCancel();
     }
 
-    addBtn.addEventListener('click', doAdd);
-    cancelBtn.addEventListener('click', doCancel);
+    function toggleDropdown() {
+      dropdownOpen = !dropdownOpen;
+      dropdownMenu.style.display = dropdownOpen ? 'block' : 'none';
+    }
 
-    // Enter → Add, Shift+Enter → 줄바꿈 허용, Escape → Cancel
-    textarea.addEventListener('keydown', (e) => {
+    function closeDropdown() {
+      dropdownOpen = false;
+      dropdownMenu.style.display = 'none';
+    }
+
+    cancelBtn.addEventListener('click', doCancel);
+    copyAddBtn.addEventListener('click', doCopyAdd);
+    dropdownTrigger.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (e.key === 'Escape') { e.preventDefault(); doCancel(); }
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doAdd(); }
+      toggleDropdown();
+    });
+    addOnlyItem.addEventListener('click', doAddOnly);
+
+    // 드롭다운 hover 효과
+    addOnlyItem.addEventListener('mouseenter', () => {
+      addOnlyItem.style.background = '#334155';
+    });
+    addOnlyItem.addEventListener('mouseleave', () => {
+      addOnlyItem.style.background = 'transparent';
     });
 
-    // 팝오버 외부 클릭 시 취소
-    function onOutside(e) {
-      if (S.popoverEl && !S.popoverEl.contains(e.target)) {
-        doCancel();
-        document.removeEventListener('mousedown', onOutside, true);
+    textarea.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        // textarea Esc: 드롭다운 열려있으면 닫기만, 아니면 취소
+        if (dropdownOpen) { closeDropdown(); }
+        else { doCancel(); }
+        return;
       }
+      if (e.key === 'Enter' && e.altKey) { e.preventDefault(); doAddOnly(); return; }
+      if (e.key === 'Enter' && !e.shiftKey && !e.altKey) { e.preventDefault(); doCopyAdd(); return; }
+      // Shift+Enter: 줄바꿈 허용 (기본 동작)
+    });
+
+    S.popoverEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dropdownOpen) { closeDropdown(); }
+        else { doCancel(); }
+      }
+    }, true);
+
+    function onOutside(e) {
+      if (!S.popoverEl) {
+        document.removeEventListener('mousedown', onOutside, true);
+        return;
+      }
+      if (S.popoverEl.contains(e.target)) {
+        // 팝오버 내부 클릭 — 드롭다운 트리거 이외 영역이면 드롭다운 닫기
+        if (dropdownOpen && !dropdownTrigger.contains(e.target)) {
+          closeDropdown();
+        }
+        return;
+      }
+      // 팝오버 외부 클릭 → 취소
+      doCancel();
+      document.removeEventListener('mousedown', onOutside, true);
     }
     setTimeout(() => document.addEventListener('mousedown', onOutside, true), 50);
 
-    S.popoverCallbacks = { doAdd, doCancel };
+    S.popoverCallbacks = { doCopyAdd, doAddOnly, doCancel };
   };
 
   /**
@@ -166,7 +244,8 @@
     if (S.popoverEl) {
       const input = S.popoverEl.querySelector('#__agt-note-input__');
       const cancelBtn = S.popoverEl.querySelector('#__agt-cancel-btn__');
-      const addBtn = S.popoverEl.querySelector('#__agt-add-btn__');
+      const copyAddBtn = S.popoverEl.querySelector('#__agt-copy-add-btn__');
+      const addOnlyItem = S.popoverEl.querySelector('#__agt-add-only-item__');
 
       if (input) {
         input.setAttribute(
@@ -177,8 +256,11 @@
       if (cancelBtn) {
         cancelBtn.textContent = S.t('overlay_popover_cancel', null, 'Cancel');
       }
-      if (addBtn) {
-        addBtn.textContent = S.t('overlay_popover_add', null, 'Add');
+      if (copyAddBtn) {
+        copyAddBtn.textContent = S.t('overlay_popover_copy_add', null, 'Copy & Add');
+      }
+      if (addOnlyItem) {
+        addOnlyItem.textContent = S.t('overlay_popover_add_only', null, 'Add only');
       }
     }
   };

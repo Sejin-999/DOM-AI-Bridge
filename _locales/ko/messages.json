@@ -145,5 +145,12 @@
   "overlay_counter_label": { "message": "선택" },
   "overlay_popover_placeholder": { "message": "무엇을 변경해야 하나요?" },
   "overlay_popover_cancel": { "message": "취소" },
-  "overlay_popover_add": { "message": "추가" }
+  "overlay_popover_add": { "message": "추가" },
+  "overlay_popover_copy_add": { "message": "복사 후 추가" },
+  "overlay_popover_add_only": { "message": "추가만" },
+  "popup_settings_accumulate_title": { "message": "항목 누적" },
+  "popup_settings_accumulate_label": { "message": "새 항목 추가 시 기존 항목 유지" },
+  "popup_settings_accumulate_desc": { "message": "OFF 시 새 항목 추가마다 이전 선택이 초기화됩니다." },
+  "overlay_toast_copied": { "message": "복사됨" },
+  "overlay_toast_copy_failed": { "message": "복사 실패" }
 }

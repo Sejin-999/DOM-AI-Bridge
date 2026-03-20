@@ -46,6 +46,7 @@
   const searchColorPalette = document.getElementById('searchColorPalette');
   const resetHighlightColorsBtn = document.getElementById('resetHighlightColorsBtn');
   const languageSelect = document.getElementById('languageSelect');
+  const accumulateModeToggle = document.getElementById('accumulateModeToggle');
   const openWebhookPageBtn = document.getElementById('openWebhookPageBtn');
   const webhookBackBtn = document.getElementById('webhookBackBtn');
   const addWebhookTargetBtn = document.getElementById('addWebhookTargetBtn');
@@ -62,6 +63,7 @@
 
   const HIGHLIGHT_COLOR_STORAGE_KEY = 'agt_highlight_colors';
   const MARKER_VISIBILITY_STORAGE_KEY = 'agt_marker_visibility';
+  const ACCUMULATE_MODE_STORAGE_KEY = 'agt_accumulate_mode';
   const WEBHOOK_CONFIG_STORAGE_KEY = 'agt_webhook_config';
   const INCLUDE_ERRORS_STORAGE_KEY = 'agt_include_errors';
   const WEBHOOK_TARGET_LIMIT = 3;
@@ -147,6 +149,14 @@
     showToast(t('popup_toast_language_updated', null, 'Language updated'));
     await sendToContent({ type: 'I18N_REFRESH' });
   });
+
+  if (accumulateModeToggle) {
+    accumulateModeToggle.addEventListener('change', () => {
+      const accumulateMode = accumulateModeToggle.checked;
+      chrome.storage.local.set({ [ACCUMULATE_MODE_STORAGE_KEY]: accumulateMode });
+      void sendToContent({ type: 'SET_ACCUMULATE_MODE', payload: { accumulateMode } });
+    });
+  }
 
   openWebhookPageBtn.addEventListener('click', () => {
     setActivePanel('panel-webhook');
@@ -1131,6 +1141,13 @@
     }
   }
 
+  async function initAccumulateModePreference() {
+    const saved = await getStorageValue(ACCUMULATE_MODE_STORAGE_KEY);
+    if (accumulateModeToggle) {
+      accumulateModeToggle.checked = typeof saved === 'boolean' ? saved : true;
+    }
+  }
+
   // ──────────────────────────────────────────
   // 콘솔 에러 포함 옵션
   // ──────────────────────────────────────────
@@ -1684,6 +1701,7 @@
     initShortcutPreference();
     setHighlightColorInputs(DEFAULT_HIGHLIGHT_COLORS);
     setMarkerToggleButton(true);
+    await initAccumulateModePreference();
 
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       if (!tabs || !tabs[0]) return;

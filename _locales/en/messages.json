@@ -145,5 +145,12 @@
   "overlay_counter_label": { "message": "Selected" },
   "overlay_popover_placeholder": { "message": "What should change?" },
   "overlay_popover_cancel": { "message": "Cancel" },
-  "overlay_popover_add": { "message": "Add" }
+  "overlay_popover_add": { "message": "Add" },
+  "overlay_popover_copy_add": { "message": "Copy & Add" },
+  "overlay_popover_add_only": { "message": "Add only" },
+  "popup_settings_accumulate_title": { "message": "Item accumulation" },
+  "popup_settings_accumulate_label": { "message": "Keep existing items when adding new" },
+  "popup_settings_accumulate_desc": { "message": "When OFF, previous selections are cleared each time you add a new item." },
+  "overlay_toast_copied": { "message": "Copied" },
+  "overlay_toast_copy_failed": { "message": "Copy failed" }
 }
